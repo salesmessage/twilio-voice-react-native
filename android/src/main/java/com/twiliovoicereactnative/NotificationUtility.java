@@ -17,9 +17,14 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.StringRes;
 import androidx.core.app.NotificationCompat;
 
 import com.twilio.voice.CallInvite;
@@ -73,36 +78,103 @@ public class NotificationUtility {
 
     RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_notification_incoming);
     remoteViews.setTextViewText(R.id.notif_title, title);
-    remoteViews.setTextViewText(R.id.notif_content, getContentBanner(context));
+    remoteViews.setTextViewText(R.id.notif_content, getContentCallBanner(callInvite));
 
     remoteViews.setOnClickPendingIntent(R.id.notification_frame, piForegroundIntent);
     remoteViews.setOnClickPendingIntent(R.id.button_answer, piAcceptIntent);
-    remoteViews.setOnClickPendingIntent(R.id.button_decline, piRejectIntent);
+//    remoteViews.setOnClickPendingIntent(R.id.button_decline, piRejectIntent);
 
     Intent notification_intent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
     PendingIntent pendingIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, notification_intent, PendingIntent.FLAG_IMMUTABLE);
 
     remoteViews.setOnClickPendingIntent(R.id.notification, pendingIntent);
 
+//    PendingIntent piAcceptIntent = PendingIntent.getActivity(
+//            context,
+//            0,
+//            acceptIntent,
+//            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+//    );
+
+    NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_call,
+            getActionText(context, R.string.accept, R.color.green),
+            piAcceptIntent
+    ).build();
+
+//    Intent rejectIntent = new Intent(context, IncomingCallNotificationService.class);
+//    rejectIntent.setAction(Constants.ACTION_REJECT);
+//    rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
+//    rejectIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
+
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.reject, R.color.red),
+            piRejectIntent
+    ).build();
+
     NotificationCompat.Builder builder = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       ? new NotificationCompat.Builder(context, getChannel(context.getApplicationContext(), channelImportance))
       : new NotificationCompat.Builder(context);
       builder.setSmallIcon(smallIconResId)
-        .setLargeIcon(icon)
-        .setContentTitle(title)
-        .setContentText(getContentBanner(context))
-        .setCategory(Notification.CATEGORY_CALL)
-        .setExtras(extras)
-        .setAutoCancel(true)
-        .setCustomContentView(remoteViews)
-        .setCustomBigContentView(remoteViews)
-        .setContentIntent(pendingIntent);
+              .setSmallIcon(R.drawable.ic_call_white_24dp)
+              .setContentTitle(Constants.INCOMING_CALL)
+              .setContentText(getContentCallBanner(callInvite))
+              .setExtras(extras)
+              .setAutoCancel(true)
+              .addAction(rejectAction)
+              .addAction(answerAction)
+              .setFullScreenIntent(piForegroundIntent, true)
+              .setPriority(NotificationCompat.PRIORITY_HIGH)
+              .setCategory(Notification.CATEGORY_CALL)
+              .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+              .setContentIntent(piForegroundIntent);
+//        .setLargeIcon(icon)
+//        .setContentTitle(title)
+//        .setContentText(getContentBanner(context))
+//        .setCategory(Notification.CATEGORY_CALL)
+//        .setExtras(extras)
+//        .setAutoCancel(true)
+//        .setCustomContentView(remoteViews)
+//        .setCustomBigContentView(remoteViews)
+//        .setContentIntent(pendingIntent);
+
+//    Resources res = context.getResources();
+    int largeIconResId = res.getIdentifier("ic_launcher", "mipmap", context.getPackageName());
+    Bitmap largeIconBitmap = BitmapFactory.decodeResource(res, largeIconResId);
+
+    if (largeIconResId != 0) {
+      builder.setLargeIcon(largeIconBitmap);
+    }
+
     if (fullScreenIntent) {
       builder.setFullScreenIntent(pendingIntent, true);
     }
     Notification notification = builder.build();
     notification.flags |= Notification.FLAG_INSISTENT;
     return notification;
+  }
+
+  private static PendingIntent createActionPendingIntent(Context context, Intent intent) {
+    return PendingIntent.getService(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+    );
+  }
+
+  private static Spannable getActionText(Context context, @StringRes int stringRes, @ColorRes int colorRes) {
+    Spannable spannable = new SpannableString(context.getText(stringRes));
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+      spannable.setSpan(
+              new ForegroundColorSpan(context.getColor(colorRes)),
+              0,
+              spannable.length(),
+              0
+      );
+    }
+    return spannable;
   }
 
   public static Notification createCallAnsweredNotificationWithLowImportance(CallInvite callInvite, int notificationId, String uuid, Context context) {
@@ -371,6 +443,11 @@ public class NotificationUtility {
     if (customParameters.get(Constants.DISPLAY_NAME) != null) {
       title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
     }
+
+    if (customParameters.get(Constants.CALLER_NAME) != null) {
+      title = URLDecoder.decode(customParameters.get(Constants.CALLER_NAME).replaceAll("\\+", "%20"));
+    }
+
     return title;
   }
 
@@ -378,4 +455,7 @@ public class NotificationUtility {
     return context.getString(R.string.app_name) + Constants.NOTIFICATION_BANNER;
   }
 
+  private static String getContentCallBanner(CallInvite callInvite) {
+    return getDisplayName(callInvite) + Constants.NOTIFICATION_CALL_BANNER;
+  }
 }

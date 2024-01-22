@@ -1,6 +1,7 @@
 package com.twiliovoicereactnative;
 
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE;
+import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -66,6 +67,7 @@ public class IncomingCallNotificationService extends Service {
         case Constants.ACTION_ACCEPT:
           acceptCall(callInvite, notificationId, uuid);
           sendCallInviteToActivity(callInvite, notificationId);
+          notificationManager.cancel(notificationId);
           break;
         case Constants.ACTION_REJECT:
           rejectCall(callInvite, notificationId, uuid);
@@ -221,8 +223,9 @@ public class IncomingCallNotificationService extends Service {
       Log.i(TAG, "setCallInProgressNotification - app is visible with CallInvite UUID " + uuid + " notificationId" + notificationId);
     } else {
       Log.i(TAG, "setCallInProgressNotification - app is NOT visible with CallInvite UUID " + " notificationId" + notificationId);
+      startForegroundCompat(notificationId, NotificationUtility.createIncomingCallNotification(callInvite, notificationId, uuid, VOICE_CHANNEL_HIGH_IMPORTANCE, true, getApplicationContext()));
     }
-    startForegroundCompat(notificationId, NotificationUtility.createIncomingCallNotification(callInvite, notificationId, uuid, VOICE_CHANNEL_DEFAULT_IMPORTANCE, true, getApplicationContext()));
+
     Log.d(TAG, "Adding items in callInviteUuidNotificaionIdMap uuid:" + uuid + " notificationId: " + notificationId);
     Storage.uuidNotificationIdMap.put(uuid, notificationId);
   }

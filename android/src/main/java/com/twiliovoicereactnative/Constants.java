@@ -23,5 +23,8 @@ public class Constants {
   public static final String FCM_TOKEN = "FCM_TOKEN";
   public static final String UUID = "UUID";
   public static final String NOTIFICATION_BANNER = " audio call";
+  public static final String NOTIFICATION_CALL_BANNER = " is calling";
+  public static final String CALLER_NAME = "CallerName";
+  public static final String INCOMING_CALL = "Incoming call";
   public static final String DISPLAY_NAME = "displayName";
 }
