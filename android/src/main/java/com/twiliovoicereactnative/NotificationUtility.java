@@ -89,23 +89,11 @@ public class NotificationUtility {
 
     remoteViews.setOnClickPendingIntent(R.id.notification, pendingIntent);
 
-//    PendingIntent piAcceptIntent = PendingIntent.getActivity(
-//            context,
-//            0,
-//            acceptIntent,
-//            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-//    );
-
     NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(
             android.R.drawable.ic_menu_call,
             getActionText(context, R.string.accept, R.color.green),
             piAcceptIntent
     ).build();
-
-//    Intent rejectIntent = new Intent(context, IncomingCallNotificationService.class);
-//    rejectIntent.setAction(Constants.ACTION_REJECT);
-//    rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
-//    rejectIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
 
     NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
             android.R.drawable.ic_menu_delete,
@@ -139,7 +127,6 @@ public class NotificationUtility {
 //        .setCustomBigContentView(remoteViews)
 //        .setContentIntent(pendingIntent);
 
-//    Resources res = context.getResources();
     int largeIconResId = res.getIdentifier("ic_launcher", "mipmap", context.getPackageName());
     Bitmap largeIconBitmap = BitmapFactory.decodeResource(res, largeIconResId);
 
@@ -209,21 +196,39 @@ public class NotificationUtility {
       endCallIntent.putExtra(Constants.UUID, uuid);
       PendingIntent piEndCallIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, endCallIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-      remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+//      remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
 
-      Notification notification = new Notification.Builder(
+      NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+              android.R.drawable.ic_menu_delete,
+              getActionText(context, R.string.reject, R.color.red),
+              piEndCallIntent
+      ).build();
+
+      Notification notification = new NotificationCompat.Builder(
         context.getApplicationContext(),
         getChannel(context.getApplicationContext(), Constants.VOICE_CHANNEL_LOW_IMPORTANCE))
-        .setSmallIcon(smallIconResId)
-        .setContentTitle(title)
-        .setContentText(getContentBanner(context))
-        .setCategory(Notification.CATEGORY_CALL)
-        .setExtras(extras)
-        .setAutoCancel(true)
-        .setCustomContentView(remoteViews)
-        .setCustomBigContentView(remoteViews)
-        .setContentIntent(pendingIntent)
-        .setFullScreenIntent(pendingIntent, true).build();
+//          .setSmallIcon(smallIconResId)
+//          .setContentTitle(title)
+//          .setContentText(getContentBanner(context))
+//          .setCategory(Notification.CATEGORY_CALL)
+//          .setExtras(extras)
+//          .setAutoCancel(true)
+//          .setCustomContentView(remoteViews)
+//          .setCustomBigContentView(remoteViews)
+//          .setContentIntent(pendingIntent)
+//          .setFullScreenIntent(pendingIntent, true)
+              .setSmallIcon(R.drawable.ic_call_white_24dp)
+              .setContentTitle(Constants.INCOMING_CALL)
+              .setContentText(getContentCallBanner(callInvite))
+              .setExtras(extras)
+              .setAutoCancel(true)
+              .addAction(rejectAction)
+              .setFullScreenIntent(pendingIntent, true)
+              .setPriority(NotificationCompat.PRIORITY_LOW)
+              .setCategory(Notification.CATEGORY_CALL)
+              .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+              .setContentIntent(pendingIntent)
+              .build();
       notification.flags |= Notification.FLAG_INSISTENT;
       return notification;
     } else {
