@@ -218,8 +218,7 @@ public class NotificationUtility {
 //          .setContentIntent(pendingIntent)
 //          .setFullScreenIntent(pendingIntent, true)
               .setSmallIcon(R.drawable.ic_call_white_24dp)
-              .setContentTitle(Constants.INCOMING_CALL)
-              .setContentText(getContentCallBanner(callInvite))
+              .setContentText(getContentBanner(context))
               .setExtras(extras)
               .setAutoCancel(true)
               .addAction(rejectAction)
@@ -279,20 +278,37 @@ public class NotificationUtility {
       endCallIntent.putExtra(Constants.UUID, uuid);
       PendingIntent piEndCallIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, endCallIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-      remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+//      remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
 
-      Notification notification = new Notification.Builder(
+      NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+              android.R.drawable.ic_menu_delete,
+              getActionText(context, R.string.reject, R.color.red),
+              piEndCallIntent
+      ).build();
+
+      Notification notification = new NotificationCompat.Builder(
         context.getApplicationContext(),
         getChannel(context.getApplicationContext(), Constants.VOICE_CHANNEL_LOW_IMPORTANCE))
-        .setSmallIcon(smallIconResId)
-        .setContentText(getContentBanner(context))
-        .setCategory(Notification.CATEGORY_CALL)
-        .setExtras(extras)
-        .setAutoCancel(true)
-        .setCustomContentView(remoteViews)
-        .setCustomBigContentView(remoteViews)
-        .setContentIntent(pendingIntent)
-        .setFullScreenIntent(pendingIntent, true).build();
+//          .setSmallIcon(smallIconResId)
+//          .setContentText(getContentBanner(context))
+//          .setCategory(Notification.CATEGORY_CALL)
+//          .setExtras(extras)
+//          .setAutoCancel(true)
+//          .setCustomContentView(remoteViews)
+//          .setCustomBigContentView(remoteViews)
+//          .setContentIntent(pendingIntent)
+//          .setFullScreenIntent(pendingIntent, true)
+              .setSmallIcon(R.drawable.ic_call_white_24dp)
+              .setContentText(getContentBanner(context))
+              .setExtras(extras)
+              .setAutoCancel(true)
+              .addAction(rejectAction)
+              .setFullScreenIntent(pendingIntent, true)
+              .setPriority(NotificationCompat.PRIORITY_LOW)
+              .setCategory(Notification.CATEGORY_CALL)
+              .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+              .setContentIntent(pendingIntent)
+              .build();
       notification.flags |= Notification.FLAG_INSISTENT;
       return notification;
     } else {
