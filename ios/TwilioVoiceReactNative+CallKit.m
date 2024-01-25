@@ -13,6 +13,7 @@
 
 NSString * const kDefaultCallKitConfigurationName = @"Twilio Voice React Native";
 NSString * const kCustomParametersKeyDisplayName = @"displayName";
+NSString * const kCustomParametersKeyCallerName = @"CallerName";
 
 @interface TwilioVoiceReactNative (CallKit) <CXProviderDelegate, TVOCallDelegate, AVAudioPlayerDelegate>
 
@@ -76,6 +77,10 @@ NSString * const kCustomParametersKeyDisplayName = @"displayName";
         NSString *callerDisplayName = customParams[kCustomParametersKeyDisplayName];
         callerDisplayName = [callerDisplayName stringByReplacingOccurrencesOfString:@"+" withString:@" "];
         handleName = callerDisplayName;
+    }
+    
+    if (customParams[kCustomParametersKeyCallerName]) {
+        handleName = customParams[kCustomParametersKeyCallerName];
     }
     
     CXHandle *callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:handleName];
