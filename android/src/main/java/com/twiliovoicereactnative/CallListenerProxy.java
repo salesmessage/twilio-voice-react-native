@@ -72,7 +72,7 @@ class CallListenerProxy implements Call.Listener {
 
     this.notificationId = (int) System.currentTimeMillis();
     MediaPlayerManager mediaPlayerManager = MediaPlayerManager.getInstance(context);
-    mediaPlayerManager.play(mediaPlayerManager.RINGTONE_WAV);
+    mediaPlayerManager.play(mediaPlayerManager.RINGTONE_WAV, false);
 
     WritableMap params = Arguments.createMap();
     params.putString(VoiceEventType, CallEventRinging);
@@ -126,7 +126,7 @@ class CallListenerProxy implements Call.Listener {
     MediaPlayerManager mediaPlayerManager = MediaPlayerManager.getInstance(this.context);
 
     mediaPlayerManager.stop();
-    mediaPlayerManager.play(mediaPlayerManager.DISCONNECT_WAV);
+    mediaPlayerManager.play(mediaPlayerManager.DISCONNECT_WAV, false);
     AudioSwitchManager.getInstance(this.context).getAudioSwitch().deactivate();
 
     WritableMap params = Arguments.createMap();

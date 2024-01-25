@@ -128,6 +128,10 @@ public class IncomingCallNotificationService extends Service {
     Log.e(TAG, "CallInvite UUID accept " + uuid);
     MediaPlayerManager.getInstance(this).stop();
     endForeground();
+
+    AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+    audioManager.setSpeakerphoneOn(false);
+
     Intent activeCallIntent = new Intent(Constants.ACTION_ACCEPT);
     activeCallIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
     activeCallIntent.putExtra(Constants.UUID, uuid);
@@ -199,7 +203,7 @@ public class IncomingCallNotificationService extends Service {
       setIncomingCallNotification(callInvite, notificationId, uuid);
     }
     MediaPlayerManager mediaPlayerManager = MediaPlayerManager.getInstance(this);
-    mediaPlayerManager.play(mediaPlayerManager.INCOMING_WAV);
+    mediaPlayerManager.play(mediaPlayerManager.INCOMING_WAV, true);
     Intent intent = new Intent(Constants.ACTION_INCOMING_CALL);
     intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
     intent.putExtra(Constants.UUID, uuid);

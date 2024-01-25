@@ -1,12 +1,20 @@
 package com.twiliovoicereactnative;
 
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 
 import com.twilio.audioswitch.AudioSwitch;
 
@@ -22,8 +30,11 @@ public class MediaPlayerManager {
     private final AudioSwitch audioSwitch;
     private int activeStream;
     private static MediaPlayerManager instance;
+    private AudioManager audioManager;
+    private static Context _context = null;
 
     private MediaPlayerManager(Context context) {
+        audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
       soundPool = (new SoundPool.Builder())
         .setMaxStreams(2)
         .setAudioAttributes(
@@ -41,14 +52,29 @@ public class MediaPlayerManager {
     }
 
     public static MediaPlayerManager getInstance(Context context) {
+        _context = context;
         if (instance == null) {
             instance = new MediaPlayerManager(context);
         }
         return instance;
     }
 
-    public void play(final int soundId) {
-      audioSwitch.activate();
+    public void play(final int soundId, Boolean enableSpeakerphone) {
+        audioSwitch.activate();
+
+        if (enableSpeakerphone) {
+            audioManager.setSpeakerphoneOn(true);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (isBluetoothHeadsetConnected()) {
+                Log.i(TAG, "Switching to bluetooth device");
+                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                audioManager.startBluetoothSco();
+                audioManager.setBluetoothScoOn(true);
+            }
+        }
+
       activeStream = soundPool.play(
         soundId,
         1.f,
@@ -66,5 +92,22 @@ public class MediaPlayerManager {
     public void release() {
       soundPool.release();
       instance = null;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private boolean isBluetoothHeadsetConnected() {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        boolean hasBluetoothPermission = ActivityCompat.checkSelfPermission(_context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+
+        Log.i(TAG, "hasBluetoothPermission: " + hasBluetoothPermission);
+
+        try {
+            return bluetoothAdapter != null && bluetoothAdapter.isEnabled()
+                    && bluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothAdapter.STATE_CONNECTED;
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+        }
+
+        return false;
     }
 }
