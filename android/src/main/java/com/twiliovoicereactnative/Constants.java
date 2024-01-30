@@ -27,4 +27,7 @@ public class Constants {
   public static final String CALLER_NAME = "CallerName";
   public static final String INCOMING_CALL = "Incoming call";
   public static final String DISPLAY_NAME = "displayName";
+  public static final String PREFERENCE_KEY = "com.twiliovoicereactnative.PREFERENCE_FILE_KEY";
+  public static final String MISSED_CALLS_GROUP = "MISSED_CALLS";
+  public static final String ACTION_CLEAR_MISSED_CALLS_COUNT = "CLEAR_MISSED_CALLS_COUNT";
 }

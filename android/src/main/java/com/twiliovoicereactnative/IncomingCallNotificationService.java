@@ -74,6 +74,9 @@ public class IncomingCallNotificationService extends Service {
           break;
         case Constants.ACTION_CANCEL_CALL:
           handleCancelledCall(intent, cancelledCallInvite.getCallSid(), notificationId, uuid);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            setMissedCallNotification(notificationId, uuid, cancelledCallInvite);
+          }
           break;
         case Constants.ACTION_CANCEL_NOTIFICATION:
           Log.d(TAG, "Cancelling notification uuid:" + uuid + " notificationId: " + notificationId);
@@ -232,6 +235,16 @@ public class IncomingCallNotificationService extends Service {
 
     Log.d(TAG, "Adding items in callInviteUuidNotificaionIdMap uuid:" + uuid + " notificationId: " + notificationId);
     Storage.uuidNotificationIdMap.put(uuid, notificationId);
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  private void setMissedCallNotification(int notificationId, String uuid, CancelledCallInvite cancelledCallInvite) {
+    if (isAppVisible()) {
+      Log.i(TAG, "setMissedCallNotification - app is visible with CancelledCallInvite UUID: " + uuid + " notificationId: " + notificationId);
+    } else {
+      Log.i(TAG, "setMissedCallNotification - app is NOT visible with CancelledCallInvite UUID: " + " notificationId: " + notificationId);
+      NotificationUtility.createMissedCallNotification(cancelledCallInvite, notificationId, uuid, getApplicationContext());
+    }
   }
 
   /*

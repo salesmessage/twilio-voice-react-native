@@ -8,6 +8,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,7 +28,9 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.StringRes;
 import androidx.core.app.NotificationCompat;
 
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.twilio.voice.CallInvite;
+import com.twilio.voice.CancelledCallInvite;
 
 import static android.content.Context.AUDIO_SERVICE;
 
@@ -35,13 +38,17 @@ import static android.content.Context.AUDIO_SERVICE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
+import static com.twiliovoicereactnative.IncomingCallNotificationService.getMainActivityClass;
 
 import java.net.URLDecoder;
 import java.util.Map;
 import java.util.Objects;
 
 public class NotificationUtility {
+
+  private static final String MISSED_CALLS_VOICE_CHANNEL = "default";
   private static final String TAG = IncomingCallNotificationService.class.getSimpleName();
+  private static NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
 
   public static Notification createIncomingCallNotification(CallInvite callInvite, int notificationId, String uuid, final String channelImportance, boolean fullScreenIntent, Context context) {
 
@@ -139,6 +146,82 @@ public class NotificationUtility {
     }
     Notification notification = builder.build();
     notification.flags |= Notification.FLAG_INSISTENT;
+    return notification;
+  }
+
+  public static Notification createMissedCallNotification(CancelledCallInvite cancelledCallInvite, int notificationId, String uuid, Context context) {
+    Bundle extras = new Bundle();
+    extras.putString(Constants.CALL_SID_KEY, cancelledCallInvite.getCallSid());
+
+    SharedPreferences sharedPref = context.getSharedPreferences(Constants.PREFERENCE_KEY, Context.MODE_PRIVATE);
+    SharedPreferences.Editor sharedPrefEditor = sharedPref.edit();
+
+    Resources res = context.getResources();
+    String packageName = context.getPackageName();
+    int smallIconResId = res.getIdentifier("ic_notification", "drawable", packageName);
+
+    Intent foreground_intent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
+    foreground_intent.setAction(Constants.ACTION_PUSH_APP_TO_FOREGROUND);
+    foreground_intent.putExtra(Constants.NOTIFICATION_ID, notificationId);
+    foreground_intent.putExtra(Constants.UUID, uuid);
+    PendingIntent piForegroundIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, foreground_intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+    String callerInfo = cancelledCallInvite.getFrom();
+    Map<String, String> customParameters = cancelledCallInvite.getCustomParameters();
+    if (customParameters.get(Constants.CALLER_NAME) != null) {
+      callerInfo = URLDecoder.decode(customParameters.get(Constants.CALLER_NAME).replaceAll("\\+", "%20"));
+    }
+
+    Intent clearMissedCallsCountIntent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
+    clearMissedCallsCountIntent.setAction(Constants.ACTION_CLEAR_MISSED_CALLS_COUNT);
+    clearMissedCallsCountIntent.putExtra(Constants.NOTIFICATION_ID, notificationId);
+    clearMissedCallsCountIntent.putExtra(Constants.UUID, uuid);
+    PendingIntent piClearMissedCallsCountIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, clearMissedCallsCountIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+    NotificationCompat.Action clearMissedCallsCountAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.dismiss, R.color.red),
+            piClearMissedCallsCountIntent
+    ).build();
+
+    int missedCalls = sharedPref.getInt(Constants.MISSED_CALLS_GROUP, 0);
+    missedCalls++;
+
+    NotificationCompat.Builder builder = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            ? new NotificationCompat.Builder(context, getMissedCallsChannel(context.getApplicationContext()))
+            : new NotificationCompat.Builder(context);
+    builder.setSmallIcon(smallIconResId)
+            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setContentTitle(missedCalls == 1 ? "Missed call" : missedCalls + " Missed calls")
+            .setContentText("last call from: " + callerInfo)
+            .setExtras(extras)
+            .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addAction(clearMissedCallsCountAction)
+            .setContentIntent(piForegroundIntent)
+            .setOngoing(true)
+            .setGroup(Constants.MISSED_CALLS_GROUP)
+            .setGroupSummary(true)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+    sharedPrefEditor.putInt(Constants.MISSED_CALLS_GROUP, missedCalls);
+    sharedPrefEditor.commit();
+
+    int largeIconResId = res.getIdentifier("ic_launcher", "mipmap", context.getPackageName());
+    Bitmap largeIconBitmap = BitmapFactory.decodeResource(res, largeIconResId);
+
+    if (largeIconResId != 0) {
+      builder.setLargeIcon(largeIconBitmap);
+    }
+
+    Notification notification = builder.build();
+    notification.flags |= Notification.FLAG_INSISTENT;
+    notification.flags |= Notification.FLAG_ONGOING_EVENT;
+
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager.notify(notificationId, notification);
+
     return notification;
   }
 
@@ -478,5 +561,60 @@ public class NotificationUtility {
 
   private static String getContentCallBanner(CallInvite callInvite) {
     return getDisplayName(callInvite) + Constants.NOTIFICATION_CALL_BANNER;
+  }
+
+  // missed calls channels
+
+  @TargetApi(Build.VERSION_CODES.O)
+  private static String getMissedCallsChannel(Context context) {
+    // construct channel if it has not been created
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+    if (null == notificationManager.getNotificationChannel(MISSED_CALLS_VOICE_CHANNEL)) {
+      createMissedCallsNotificationChannels(context);
+    }
+    return MISSED_CALLS_VOICE_CHANNEL;
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  public static void createMissedCallsNotificationChannels(Context context) {
+    NotificationManager notificationManager =
+            (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager.createNotificationChannelGroup(
+            new NotificationChannelGroup(Constants.MISSED_CALLS_GROUP, "Twilio Voice"));
+
+    notificationManager.createNotificationChannel(createMissedCallsNotificationChannel(context, MISSED_CALLS_VOICE_CHANNEL));
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  private static NotificationChannel createMissedCallsNotificationChannel(Context context,
+                                                               final String voiceChannelId) {
+    final int notificationImportance = getChannelImportance(voiceChannelId);
+    NotificationChannel voiceChannel = new NotificationChannel(
+            voiceChannelId,
+            "Primary Voice Channel",
+            notificationImportance);
+    voiceChannel.setImportance(notificationImportance);
+    voiceChannel.setLightColor(Color.GREEN);
+    voiceChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+    voiceChannel.setGroup(Constants.MISSED_CALLS_GROUP);
+    // low-importance notifications don't have sound
+    if (!Constants.VOICE_CHANNEL_LOW_IMPORTANCE.equals(voiceChannelId)) {
+      // set audio attributes for channel
+      Uri soundUri = Storage.provideResourceSilent_wav(context);
+      AudioAttributes audioAttributes = new AudioAttributes.Builder()
+              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+              .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+              .build();
+      voiceChannel.setSound(soundUri, audioAttributes);
+    }
+    return voiceChannel;
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  public static void destroyMissedCallsNotificationChannels(Context context) {
+    NotificationManager notificationManager =
+            (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager.deleteNotificationChannelGroup(Constants.MISSED_CALLS_GROUP);
   }
 }

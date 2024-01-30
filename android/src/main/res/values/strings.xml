@@ -11,4 +11,5 @@
     <string name="select_device">Select Audio Device</string>
     <string name="accept" translatable="false">Answer</string>
     <string name="reject" translatable="false">Decline</string>
+    <string name="dismiss" translatable="false">Dismiss</string>
 </resources>

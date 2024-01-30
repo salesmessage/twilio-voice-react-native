@@ -1,8 +1,11 @@
 package com.twiliovoicereactnative;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 
 public class NotificationProxyActivity extends Activity {
   @Override
@@ -25,17 +28,31 @@ public class NotificationProxyActivity extends Activity {
       switch (action) {
         case Constants.ACTION_PUSH_APP_TO_FOREGROUND:
           launchMainActivity();
+          removeMissedCalls();
           break;
         case Constants.ACTION_PUSH_APP_TO_FOREGROUND_AND_MINIMIZE_NOTIFICATION:
         case Constants.ACTION_ACCEPT:
           launchService(intent);
           launchMainActivity();
+          removeMissedCalls();
+          break;
+        case Constants.ACTION_CLEAR_MISSED_CALLS_COUNT:
+          removeMissedCalls();
+          NotificationUtility.destroyMissedCallsNotificationChannels(getApplicationContext());
           break;
         default:
           launchService(intent);
           break;
       }
     }
+  }
+
+  private void removeMissedCalls() {
+    SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(
+            Constants.PREFERENCE_KEY, Context.MODE_PRIVATE);
+    SharedPreferences.Editor sharedPrefEditor = sharedPref.edit();
+    sharedPrefEditor.putInt(Constants.MISSED_CALLS_GROUP, 0);
+    sharedPrefEditor.commit();
   }
 
   private void launchMainActivity() {
