@@ -203,7 +203,9 @@ public class NotificationUtility {
             .setGroup(Constants.MISSED_CALLS_GROUP)
             .setGroupSummary(true)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+//            .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND)
+            .setVibrate(new long[0]);
 
     sharedPrefEditor.putInt(Constants.MISSED_CALLS_GROUP, missedCalls);
     sharedPrefEditor.commit();
@@ -218,6 +220,11 @@ public class NotificationUtility {
     Notification notification = builder.build();
     notification.flags |= Notification.FLAG_INSISTENT;
     notification.flags |= Notification.FLAG_ONGOING_EVENT;
+
+//    notification.sound = null;
+//    notification.vibrate = null;
+//    notification.defaults &= Notification.DEFAULT_SOUND;
+//    notification.defaults &= Notification.DEFAULT_VIBRATE;
 
     NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     notificationManager.notify(notificationId, notification);
@@ -591,25 +598,19 @@ public class NotificationUtility {
   @TargetApi(Build.VERSION_CODES.O)
   private static NotificationChannel createMissedCallsNotificationChannel(Context context,
                                                                final String voiceChannelId) {
-    final int notificationImportance = getChannelImportance(voiceChannelId);
+    final int notificationImportance = NotificationManager.IMPORTANCE_LOW;
     NotificationChannel voiceChannel = new NotificationChannel(
             voiceChannelId,
             "Primary Voice Channel",
             notificationImportance);
     voiceChannel.setImportance(notificationImportance);
+//    voiceChannel.setVibrationPattern(new long[0]);
+//    voiceChannel.enableVibration(true);
+
     voiceChannel.setLightColor(Color.GREEN);
     voiceChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
     voiceChannel.setGroup(Constants.MISSED_CALLS_GROUP);
-    // low-importance notifications don't have sound
-    if (!Constants.VOICE_CHANNEL_LOW_IMPORTANCE.equals(voiceChannelId)) {
-      // set audio attributes for channel
-      Uri soundUri = Storage.provideResourceSilent_wav(context);
-      AudioAttributes audioAttributes = new AudioAttributes.Builder()
-              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-              .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-              .build();
-      voiceChannel.setSound(soundUri, audioAttributes);
-    }
+
     return voiceChannel;
   }
 

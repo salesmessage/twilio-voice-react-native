@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.twilio.audioswitch.AudioSwitch;
 
+import android.os.Vibrator;
 import android.media.RingtoneManager;
 import android.media.Ringtone;
 
@@ -25,6 +26,7 @@ import java.io.IOException;
 
 public class MediaPlayerManager {
     private boolean playing = false;
+    private Vibrator vibe = null;
     private Ringtone ringtone = null;
     public final int DISCONNECT_WAV;
     public final int INCOMING_WAV;
@@ -39,6 +41,7 @@ public class MediaPlayerManager {
     private static Context _context = null;
 
     private MediaPlayerManager(Context context) {
+        vibe = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
         ringtone = RingtoneManager.getRingtone(context, ringtoneSound);
 
@@ -76,29 +79,57 @@ public class MediaPlayerManager {
     }
 
     public void play(final int soundId, Boolean enableSpeakerphone, Boolean isAppVisible) {
-        ringtone.play();
-        playing = true;
+        try {
+            if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
+                long[] pattern = {0, 300, 1000};
 
-        if (enableSpeakerphone) {
-            audioManager.setSpeakerphoneOn(true);
+                if (isAppVisible) {
+                    vibe.vibrate(pattern, 0);
+                }
+                Log.i(TAG, "Vibration started");
+                return;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error occurred during vibration");
+            e.printStackTrace();
+            return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (isBluetoothHeadsetConnected()) {
-                Log.i(TAG, "Switching to bluetooth device");
-                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                audioManager.startBluetoothSco();
-                audioManager.setBluetoothScoOn(true);
+        try {
+            if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL && !playing && ringtone != null) {
+                ringtone.play();
+                playing = true;
+
+                Log.i(TAG, "Sound started playing");
+
+                if (enableSpeakerphone) {
+                    audioManager.setSpeakerphoneOn(true);
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (isBluetoothHeadsetConnected()) {
+                        Log.i(TAG, "Switching to bluetooth device");
+                        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                        audioManager.startBluetoothSco();
+                        audioManager.setBluetoothScoOn(true);
+                    }
+                }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error occurred during playing sound");
+            e.printStackTrace();
         }
     }
 
     public void stop() {
         try {
-            ringtone.stop();
-            playing = false;
-            soundPool.stop(activeStream);
-          activeStream = 0;
+            if (ringtone.isPlaying() && ringtone != null) {
+                ringtone.stop();
+                playing = false;
+            }
+
+            vibe.cancel();
+            Log.i(TAG, "Vibration and sound stopped");
         } catch (Exception e) {
             Log.e(TAG, "Failed from stopRinging");
         }
