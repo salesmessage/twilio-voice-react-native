@@ -30,4 +30,5 @@ public class Constants {
   public static final String PREFERENCE_KEY = "com.twiliovoicereactnative.PREFERENCE_FILE_KEY";
   public static final String MISSED_CALLS_GROUP = "MISSED_CALLS";
   public static final String ACTION_CLEAR_MISSED_CALLS_COUNT = "CLEAR_MISSED_CALLS_COUNT";
+  public static final String CALL_IN_PROGRESS = "Call in progress";
 }

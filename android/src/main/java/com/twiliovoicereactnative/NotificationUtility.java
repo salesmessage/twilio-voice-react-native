@@ -193,7 +193,7 @@ public class NotificationUtility {
     builder.setSmallIcon(smallIconResId)
             .setSmallIcon(R.drawable.ic_call_white_24dp)
             .setContentTitle(missedCalls == 1 ? "Missed call" : missedCalls + " Missed calls")
-            .setContentText("last call from: " + callerInfo)
+            .setContentText(missedCalls == 1 ? callerInfo + " called" : "last call from: " + callerInfo)
             .setExtras(extras)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -258,7 +258,7 @@ public class NotificationUtility {
     smallIconResId = res.getIdentifier("ic_notification", "drawable", packageName);
 
     RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
-    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
+    remoteViews.setTextViewText(R.id.make_call_text, Constants.CALL_IN_PROGRESS);
     String title = getDisplayName(callInvite);
 
     Log.i(TAG, "createCallAnsweredNotification " + uuid + " notificationId" + notificationId);
@@ -301,7 +301,8 @@ public class NotificationUtility {
 //          .setContentIntent(pendingIntent)
 //          .setFullScreenIntent(pendingIntent, true)
               .setSmallIcon(R.drawable.ic_call_white_24dp)
-              .setContentText(getContentBanner(context))
+              .setContentTitle(Constants.CALL_IN_PROGRESS)
+              .setContentText("Show call details in the app")
               .setExtras(extras)
               .setAutoCancel(true)
               .addAction(rejectAction)
@@ -317,7 +318,7 @@ public class NotificationUtility {
       Notification notification = new NotificationCompat.Builder(context)
         .setSmallIcon(smallIconResId)
         .setContentTitle(title)
-        .setContentText(getContentBanner(context))
+        .setContentText(Constants.CALL_IN_PROGRESS)
         .setCategory(Notification.CATEGORY_CALL)
         .setExtras(extras)
         .setAutoCancel(true)
@@ -344,7 +345,7 @@ public class NotificationUtility {
     smallIconResId = res.getIdentifier("ic_notification", "drawable", packageName);
 
     RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
-    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
+    remoteViews.setTextViewText(R.id.make_call_text, Constants.CALL_IN_PROGRESS);
 
     Intent notification_intent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
     notification_intent.setAction(Constants.ACTION_PUSH_APP_TO_FOREGROUND);
@@ -382,7 +383,8 @@ public class NotificationUtility {
 //          .setContentIntent(pendingIntent)
 //          .setFullScreenIntent(pendingIntent, true)
               .setSmallIcon(R.drawable.ic_call_white_24dp)
-              .setContentText(getContentBanner(context))
+              .setContentTitle(Constants.CALL_IN_PROGRESS)
+              .setContentText("Show call details in the app")
               .setExtras(extras)
               .setAutoCancel(true)
               .addAction(rejectAction)
@@ -397,7 +399,7 @@ public class NotificationUtility {
     } else {
       Notification notification = new NotificationCompat.Builder(context)
         .setSmallIcon(smallIconResId)
-        .setContentText(getContentBanner(context))
+        .setContentText(Constants.CALL_IN_PROGRESS)
         .setCategory(Notification.CATEGORY_CALL)
         .setExtras(extras)
         .setAutoCancel(true)
@@ -424,7 +426,7 @@ public class NotificationUtility {
     Log.i(TAG, "createWakeupAppNotification " + uuid + " notificationId" + notificationId);
 
     RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
-    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
+    remoteViews.setTextViewText(R.id.make_call_text, Constants.CALL_IN_PROGRESS);
 
     Intent notification_intent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
     notification_intent.setAction(Constants.ACTION_PUSH_APP_TO_FOREGROUND);
@@ -447,7 +449,7 @@ public class NotificationUtility {
         context.getApplicationContext(),
         getChannel(context.getApplicationContext(), Constants.VOICE_CHANNEL_LOW_IMPORTANCE))
         .setSmallIcon(smallIconResId)
-        .setContentText(getContentBanner(context))
+        .setContentText(Constants.CALL_IN_PROGRESS)
         .setCategory(Notification.CATEGORY_CALL)
         .setExtras(extras)
         .setAutoCancel(true)
@@ -460,7 +462,7 @@ public class NotificationUtility {
     } else {
       Notification notification = new NotificationCompat.Builder(context)
         .setSmallIcon(smallIconResId)
-        .setContentText(getContentBanner(context))
+        .setContentText(Constants.CALL_IN_PROGRESS)
         .setCategory(Notification.CATEGORY_CALL)
         .setExtras(extras)
         .setAutoCancel(true)
