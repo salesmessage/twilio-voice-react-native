@@ -18,9 +18,14 @@ import androidx.core.app.ActivityCompat;
 
 import com.twilio.audioswitch.AudioSwitch;
 
+import android.media.RingtoneManager;
+import android.media.Ringtone;
+
 import java.io.IOException;
 
 public class MediaPlayerManager {
+    private boolean playing = false;
+    private Ringtone ringtone = null;
     public final int DISCONNECT_WAV;
     public final int INCOMING_WAV;
     public final int OUTGOING_WAV;
@@ -34,6 +39,9 @@ public class MediaPlayerManager {
     private static Context _context = null;
 
     private MediaPlayerManager(Context context) {
+        Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        ringtone = RingtoneManager.getRingtone(context, ringtoneSound);
+
         audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
       soundPool = (new SoundPool.Builder())
         .setMaxStreams(2)
@@ -49,6 +57,14 @@ public class MediaPlayerManager {
       INCOMING_WAV = soundPool.load(context, R.raw.incoming, 1);
       OUTGOING_WAV = soundPool.load(context, R.raw.outgoing, 1);
       RINGTONE_WAV = soundPool.load(context, R.raw.ringtone, 1);
+
+      AudioAttributes alarmAttribute = new AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ALARM)
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        .build();
+        if (ringtone != null) {
+            ringtone.setAudioAttributes(alarmAttribute);
+        }
     }
 
     public static MediaPlayerManager getInstance(Context context) {
@@ -59,8 +75,9 @@ public class MediaPlayerManager {
         return instance;
     }
 
-    public void play(final int soundId, Boolean enableSpeakerphone) {
-        audioSwitch.activate();
+    public void play(final int soundId, Boolean enableSpeakerphone, Boolean isAppVisible) {
+        ringtone.play();
+        playing = true;
 
         if (enableSpeakerphone) {
             audioManager.setSpeakerphoneOn(true);
@@ -74,19 +91,17 @@ public class MediaPlayerManager {
                 audioManager.setBluetoothScoOn(true);
             }
         }
-
-      activeStream = soundPool.play(
-        soundId,
-        1.f,
-        1.f,
-        1,
-        (DISCONNECT_WAV == soundId) ? 0 : -1,
-        1.f);
     }
 
     public void stop() {
-      soundPool.stop(activeStream);
-      activeStream = 0;
+        try {
+            ringtone.stop();
+            playing = false;
+            soundPool.stop(activeStream);
+          activeStream = 0;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed from stopRinging");
+        }
     }
 
     public void release() {

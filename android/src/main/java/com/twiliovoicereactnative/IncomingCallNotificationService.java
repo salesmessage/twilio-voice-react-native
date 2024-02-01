@@ -206,7 +206,7 @@ public class IncomingCallNotificationService extends Service {
       setIncomingCallNotification(callInvite, notificationId, uuid);
     }
     MediaPlayerManager mediaPlayerManager = MediaPlayerManager.getInstance(this);
-    mediaPlayerManager.play(mediaPlayerManager.INCOMING_WAV, true);
+    mediaPlayerManager.play(mediaPlayerManager.INCOMING_WAV, true, isAppVisible());
     Intent intent = new Intent(Constants.ACTION_INCOMING_CALL);
     intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
     intent.putExtra(Constants.UUID, uuid);
