@@ -59,10 +59,16 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
 
   private final ReactApplicationContext reactContext;
   private final AudioSwitchManager audioSwitchManager;
+  private ProximityManager proximityManager;
+  private EventManager eventManager;
 
   public TwilioVoiceReactNativeModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+
+    eventManager = new EventManager(reactContext);
+    proximityManager = new ProximityManager(reactContext, eventManager);
+    CallListenerProxy.proximityManager = proximityManager;
 
     System.setProperty(GLOBAL_ENV, ReactNativeVoiceSDK);
     System.setProperty(SDK_VERSION, ReactNativeVoiceSDKVer);
@@ -218,6 +224,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
 
     WritableMap callInfo = serializeCall(uuid, call);
 
+    proximityManager.startProximitySensor();
+
     promise.resolve(callInfo);
   }
 
@@ -365,6 +373,7 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     }
 
     activeCall.disconnect();
+    proximityManager.stopProximitySensor();
     promise.resolve(uuid);
   }
 
@@ -511,6 +520,7 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     Log.d(TAG, "callInvite_accept uuid" + callInviteUuid);
     try {
       CallInvite callInvite = Storage.callInviteMap.get(callInviteUuid);
+      proximityManager.startProximitySensor();
 
       if (callInvite == null) {
         promise.reject("No such \"callInvite\" object exists with UUID " + callInviteUuid);

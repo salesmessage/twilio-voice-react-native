@@ -39,6 +39,7 @@ class CallListenerProxy implements Call.Listener {
 
   private int notificationId;
   private final Context context;
+  public static ProximityManager proximityManager = null;
 
   public CallListenerProxy(String uuid, Context context) {
     this.uuid = uuid;
@@ -64,6 +65,9 @@ class CallListenerProxy implements Call.Listener {
     cancelNotification();
 
     Storage.callMap.remove(uuid);
+    if (proximityManager != null) {
+      proximityManager.stopProximitySensor();
+    }
   }
 
   @Override
@@ -142,6 +146,10 @@ class CallListenerProxy implements Call.Listener {
 
     cancelNotification();
     Storage.callMap.remove(uuid);
+
+    if (proximityManager != null) {
+      proximityManager.stopProximitySensor();
+    }
   }
 
   @Override
