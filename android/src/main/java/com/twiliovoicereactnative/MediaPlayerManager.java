@@ -79,6 +79,7 @@ public class MediaPlayerManager {
     }
 
     public void play(final int soundId, Boolean enableSpeakerphone, Boolean isAppVisible) {
+        audioSwitch.activate();
         try {
             if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
                 long[] pattern = {0, 300, 1000};
