@@ -223,9 +223,6 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     Storage.callMap.put(uuid, call);
 
     WritableMap callInfo = serializeCall(uuid, call);
-
-    proximityManager.startProximitySensor();
-
     promise.resolve(callInfo);
   }
 
@@ -520,7 +517,6 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     Log.d(TAG, "callInvite_accept uuid" + callInviteUuid);
     try {
       CallInvite callInvite = Storage.callInviteMap.get(callInviteUuid);
-      proximityManager.startProximitySensor();
 
       if (callInvite == null) {
         promise.reject("No such \"callInvite\" object exists with UUID " + callInviteUuid);

@@ -98,6 +98,7 @@ class CallListenerProxy implements Call.Listener {
     params.putString(VoiceEventType, CallEventConnected);
     params.putMap(EVENT_KEY_CALL_INFO, serializeCall(uuid, call));
     AndroidEventEmitter.getInstance().sendEvent(ScopeCall, params);
+    proximityManager.startProximitySensor();
   }
 
   @Override
