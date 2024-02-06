@@ -230,9 +230,8 @@ public class IncomingCallNotificationService extends Service {
       Log.i(TAG, "setCallInProgressNotification - app is visible with CallInvite UUID " + uuid + " notificationId" + notificationId);
     } else {
       Log.i(TAG, "setCallInProgressNotification - app is NOT visible with CallInvite UUID " + " notificationId" + notificationId);
-      startForegroundCompat(notificationId, NotificationUtility.createIncomingCallNotification(callInvite, notificationId, uuid, VOICE_CHANNEL_HIGH_IMPORTANCE, true, getApplicationContext()));
     }
-
+    startForegroundCompat(notificationId, NotificationUtility.createIncomingCallNotification(callInvite, notificationId, uuid, VOICE_CHANNEL_HIGH_IMPORTANCE, true, getApplicationContext()));
     Log.d(TAG, "Adding items in callInviteUuidNotificaionIdMap uuid:" + uuid + " notificationId: " + notificationId);
     Storage.uuidNotificationIdMap.put(uuid, notificationId);
   }
