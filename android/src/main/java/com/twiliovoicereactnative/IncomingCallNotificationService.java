@@ -15,12 +15,17 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import io.embrace.android.embracesdk.Embrace;
+
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import com.facebook.react.bridge.WritableMap;
 import com.twilio.voice.AcceptOptions;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallInvite;
@@ -51,6 +56,8 @@ public class IncomingCallNotificationService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
     String action = intent.getAction();
     NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    Embrace.getInstance().logInfo("[Android Notification] Action: " + action + ", isAppVisible: " + isAppVisible());
 
     Log.d(TAG, "Received command " + action);
     if (action != null) {
@@ -211,6 +218,7 @@ public class IncomingCallNotificationService extends Service {
     intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
     intent.putExtra(Constants.UUID, uuid);
     LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    Embrace.getInstance().logInfo("[Android Notification] Successfully handled incoming call");
   }
 
   private void startForegroundCompat(int id, Notification notification) {
