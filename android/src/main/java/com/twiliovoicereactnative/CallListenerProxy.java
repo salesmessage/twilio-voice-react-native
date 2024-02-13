@@ -33,6 +33,8 @@ import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.*;
 import java.util.Date;
 import java.util.Set;
 
+import io.embrace.android.embracesdk.Embrace;
+
 class CallListenerProxy implements Call.Listener {
   static final String TAG = "CallListenerProxy";
   private final String uuid;
@@ -178,12 +180,17 @@ class CallListenerProxy implements Call.Listener {
   }
 
   private void cancelNotification() {
-    Intent intent = new Intent(context, IncomingCallNotificationService.class);
-    intent.setAction(Constants.ACTION_CANCEL_NOTIFICATION);
-    intent.putExtra(Constants.UUID, this.uuid);
-    intent.putExtra(Constants.CALL_SID_KEY, Storage.uuidNotificationIdMap.get(this.uuid));
-    intent.putExtra(Constants.NOTIFICATION_ID, this.notificationId);
-    context.startService(intent);
+    try {
+      Intent intent = new Intent(context, IncomingCallNotificationService.class);
+      intent.setAction(Constants.ACTION_CANCEL_NOTIFICATION);
+      intent.putExtra(Constants.UUID, this.uuid);
+      intent.putExtra(Constants.CALL_SID_KEY, Storage.uuidNotificationIdMap.get(this.uuid));
+      intent.putExtra(Constants.NOTIFICATION_ID, this.notificationId);
+      context.startService(intent);
+    } catch (Exception e) {
+      e.printStackTrace();
+      Embrace.getInstance().logError("[Android CallListenerProxy] cancelNotification: " + e.getMessage());
+    }
   }
 
   private void raiseNotification(Call call) {
