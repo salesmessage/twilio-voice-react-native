@@ -172,18 +172,6 @@ public class NotificationUtility {
       callerInfo = URLDecoder.decode(customParameters.get(Constants.CALLER_NAME).replaceAll("\\+", "%20"));
     }
 
-    Intent clearMissedCallsCountIntent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
-    clearMissedCallsCountIntent.setAction(Constants.ACTION_CLEAR_MISSED_CALLS_COUNT);
-    clearMissedCallsCountIntent.putExtra(Constants.NOTIFICATION_ID, notificationId);
-    clearMissedCallsCountIntent.putExtra(Constants.UUID, uuid);
-    PendingIntent piClearMissedCallsCountIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, clearMissedCallsCountIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-    NotificationCompat.Action clearMissedCallsCountAction = new NotificationCompat.Action.Builder(
-            android.R.drawable.ic_menu_delete,
-            getActionText(context, R.string.dismiss, R.color.red),
-            piClearMissedCallsCountIntent
-    ).build();
-
     int missedCalls = sharedPref.getInt(Constants.MISSED_CALLS_GROUP, 0);
     missedCalls++;
 
@@ -191,13 +179,12 @@ public class NotificationUtility {
             ? new NotificationCompat.Builder(context, getMissedCallsChannel(context.getApplicationContext()))
             : new NotificationCompat.Builder(context);
     builder.setSmallIcon(smallIconResId)
-            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setSmallIcon(R.drawable.ic_call_missed_white_24dp)
             .setContentTitle(missedCalls == 1 ? "Missed call" : missedCalls + " Missed calls")
             .setContentText(missedCalls == 1 ? callerInfo + " called" : "last call from: " + callerInfo)
             .setExtras(extras)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .addAction(clearMissedCallsCountAction)
             .setContentIntent(piForegroundIntent)
             .setOngoing(true)
             .setGroup(Constants.MISSED_CALLS_GROUP)
