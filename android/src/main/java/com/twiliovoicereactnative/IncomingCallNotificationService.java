@@ -72,6 +72,7 @@ public class IncomingCallNotificationService extends Service {
           handleIncomingCall(callInvite, notificationId, uuid);
           break;
         case Constants.ACTION_ACCEPT:
+          MediaPlayerManager.getInstance(this).activateAudioSwitch();
           acceptCall(callInvite, notificationId, uuid);
           sendCallInviteToActivity(callInvite, notificationId);
           notificationManager.cancel(notificationId);
