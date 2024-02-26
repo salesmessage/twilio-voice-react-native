@@ -185,6 +185,13 @@ public class VoiceBroadcastReceiver extends BroadcastReceiver {
         Log.d(TAG, "Successfully received ACTION_PUSH_APP_TO_FOREGROUND_AND_MINIMIZE_NOTIFICATION notification");
         // send some event to JS
         params.putString(VoiceEventType, VoiceEventCallInviteNotificationTapped);
+
+        uuid = intent.getStringExtra(Constants.UUID);
+        callInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
+        callInviteInfo = serializeCallInvite(uuid, callInvite);
+
+        params.putMap(EVENT_KEY_CALL_INVITE_INFO, callInviteInfo);
+
         AndroidEventEmitter.getInstance().sendEvent(ScopeVoice, params);
         break;
       default:

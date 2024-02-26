@@ -571,7 +571,11 @@ export class Voice extends EventEmitter {
       );
     }
 
-    this.emit(Voice.Event.CallInviteNotificationTapped);
+    const { callInvite: callInviteInfo } = nativeVoiceEvent;
+
+    const callInvite = new CallInvite(callInviteInfo, CallInvite.State.Pending);
+
+    this.emit(Voice.Event.CallInviteNotificationTapped, callInvite);
   };
 
   /**
