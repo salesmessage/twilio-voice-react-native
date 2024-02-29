@@ -120,6 +120,10 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
     Storage.cancelledCallInviteMap.put(uuid, cancelledCallInvite);
 
-    this.context.startService(intent);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      startForegroundService(intent);
+    } else {
+      startService(intent);
+    }
   }
 }

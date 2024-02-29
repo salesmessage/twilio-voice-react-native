@@ -64,6 +64,8 @@ public class NotificationUtility {
     foreground_intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
     foreground_intent.putExtra(Constants.NOTIFICATION_ID, notificationId);
     foreground_intent.putExtra(Constants.UUID, uuid);
+    foreground_intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    foreground_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     PendingIntent piForegroundIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, foreground_intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Intent rejectIntent = new Intent(context.getApplicationContext(), NotificationProxyActivity.class);
