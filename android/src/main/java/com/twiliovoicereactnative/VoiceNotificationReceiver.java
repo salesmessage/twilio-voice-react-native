@@ -282,7 +282,9 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     // notify JS layer
     sendJSEvent(
       constructJSMap(
-        new Pair<>(VoiceEventType, VoiceEventCallInviteNotificationTapped)));
+        new Pair<>(VoiceEventType, VoiceEventCallInviteNotificationTapped),
+        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))
+      ));
   }
 
   private static void sendJSEvent(@NonNull WritableMap event) {

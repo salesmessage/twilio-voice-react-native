@@ -8,4 +8,6 @@
   <color name="colorContentTitle">#000000</color>
   <color name="colorContent">#505050</color>
   <color name="colorButtonText">#FFFFFF</color>
+  <color name="red">#d6312e</color>
+  <color name="green">#258c42</color>
 </resources>

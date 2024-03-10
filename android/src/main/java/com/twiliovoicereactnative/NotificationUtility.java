@@ -17,9 +17,16 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.widget.RemoteViews;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationChannelGroupCompat;
 import androidx.core.app.NotificationCompat;
@@ -45,6 +52,7 @@ class NotificationUtility {
                                                             @NonNull final CallRecord callRecord,
                                                             @NonNull final String channelImportance,
                                                             boolean fullScreenIntent) {
+    CallInvite callInvite = callRecord.getCallInvite();
     final int smallIconResId = getSmallIconResource(context);
     final String title = getDisplayName(callRecord.getCallInvite());
     final Bitmap icon = constructBitmap(context, R.drawable.ic_call_end_white_24dp);
@@ -70,22 +78,50 @@ class NotificationUtility {
       callRecord.getUuid());
     PendingIntent piAcceptIntent = constructPendingIntentForActivity(context, acceptIntent);
 
-    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_notification_incoming);
-    remoteViews.setTextViewText(R.id.notif_title, title);
-    remoteViews.setTextViewText(R.id.notif_content, getContentBanner(context));
-    remoteViews.setOnClickPendingIntent(R.id.button_answer, piAcceptIntent);
-    remoteViews.setOnClickPendingIntent(R.id.button_decline, piRejectIntent);
+//    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_notification_incoming);
+//    remoteViews.setTextViewText(R.id.notif_title, title);
+//    remoteViews.setTextViewText(R.id.notif_content, getContentBanner(context));
+//    remoteViews.setOnClickPendingIntent(R.id.button_answer, piAcceptIntent);
+//    remoteViews.setOnClickPendingIntent(R.id.button_decline, piRejectIntent);
+
+    Bundle extras = new Bundle();
+    extras.putString("CALL_SID", callInvite.getCallSid());
+
+    NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_call,
+            getActionText(context, R.string.accept, R.color.green),
+            piAcceptIntent
+    ).build();
+
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.reject, R.color.red),
+            piRejectIntent
+    ).build();
 
     NotificationCompat.Builder builder = constructNotificationBuilder(context, channelImportance);
-      builder.setSmallIcon(smallIconResId)
-        .setLargeIcon(icon)
-        .setContentTitle(title)
-        .setContentText(getContentBanner(context))
-        .setCategory(Notification.CATEGORY_CALL)
-        .setAutoCancel(true)
-        .setCustomContentView(remoteViews)
-        .setCustomBigContentView(remoteViews)
-        .setContentIntent(piForegroundIntent);
+      builder
+              .setSmallIcon(R.drawable.ic_call_white_24dp)
+              .setContentTitle("Incoming call")
+              .setContentText(getContentCallBanner(callInvite))
+              .setExtras(extras)
+              .setAutoCancel(true)
+              .addAction(rejectAction)
+              .addAction(answerAction)
+              .setFullScreenIntent(piForegroundIntent, true)
+              .setPriority(NotificationCompat.PRIORITY_HIGH)
+              .setCategory(Notification.CATEGORY_CALL)
+              .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+              .setContentIntent(piForegroundIntent);
+//              .setSmallIcon(smallIconResId)
+//        .setLargeIcon(icon)
+//        .setContentTitle(title)
+//        .setContentText(getContentBanner(context))
+//        .setCategory(Notification.CATEGORY_CALL)
+//        .setAutoCancel(true)
+//        .setCustomContentView(remoteViews)
+//        .setCustomBigContentView(remoteViews)
+//        .setContentIntent(piForegroundIntent);
     if (fullScreenIntent) {
       builder.setFullScreenIntent(piForegroundIntent, true);
     }
@@ -222,7 +258,18 @@ class NotificationUtility {
     return voiceChannelId;
   }
 
-  private static String getDisplayName(@NonNull CallInvite callInvite) {
+//  private static String getDisplayName(@NonNull CallInvite callInvite) {
+//    String title = callInvite.getFrom();
+//    Map<String, String> customParameters = callInvite.getCustomParameters();
+//    // If "displayName" is passed as a custom parameter in the TwiML application,
+//    // it will be used as the caller name.
+//    if (customParameters.get(Constants.DISPLAY_NAME) != null) {
+//      title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
+//    }
+//    return title;
+//  }
+
+  private static String getDisplayName(CallInvite callInvite) {
     String title = callInvite.getFrom();
     Map<String, String> customParameters = callInvite.getCustomParameters();
     // If "displayName" is passed as a custom parameter in the TwiML application,
@@ -230,6 +277,11 @@ class NotificationUtility {
     if (customParameters.get(Constants.DISPLAY_NAME) != null) {
       title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
     }
+
+    if (customParameters.get("CallerName") != null) {
+      title = URLDecoder.decode(customParameters.get("CallerName").replaceAll("\\+", "%20"));
+    }
+
     return title;
   }
 
@@ -285,5 +337,23 @@ class NotificationUtility {
       .authority(context.getResources().getResourcePackageName(id))
       .appendPath(String.valueOf(id))
     ).build();
+  }
+
+
+  private static String getContentCallBanner(CallInvite callInvite) {
+    return getDisplayName(callInvite) + " is calling";
+  }
+
+  private static Spannable getActionText(Context context, @StringRes int stringRes, @ColorRes int colorRes) {
+    Spannable spannable = new SpannableString(context.getText(stringRes));
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+      spannable.setSpan(
+              new ForegroundColorSpan(context.getColor(colorRes)),
+              0,
+              spannable.length(),
+              0
+      );
+    }
+    return spannable;
   }
 }
