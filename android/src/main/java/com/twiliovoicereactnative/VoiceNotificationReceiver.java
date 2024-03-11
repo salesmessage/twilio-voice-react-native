@@ -29,8 +29,11 @@ import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.serializ
 import static com.twiliovoicereactnative.VoiceApplicationProxy.getCallRecordDatabase;
 import static com.twiliovoicereactnative.VoiceApplicationProxy.getJSEventEmitter;
 
+import com.twilio.voice.CancelledCallInvite;
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -45,6 +48,8 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ProcessLifecycleOwner;
 
 import com.facebook.react.bridge.WritableMap;
 import com.twilio.voice.AcceptOptions;
@@ -52,6 +57,7 @@ import com.twilio.voice.AcceptOptions;
 
 public class VoiceNotificationReceiver extends BroadcastReceiver {
   private static final SDKLog logger = new SDKLog(VoiceNotificationReceiver.class);
+  private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
   @Override
   public void onReceive(@NonNull Context context, @NonNull Intent intent) {
     switch (Objects.requireNonNull(intent.getAction())) {
@@ -222,6 +228,40 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         new Pair<>(VoiceEventType, VoiceEventCallInviteCancelled),
         new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
         new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
+
+    if (isAppVisible()) {
+      return;
+    }
+
+    try {
+      // put up notification
+      callRecord.setNotificationId(NotificationUtility.createNotificationIdentifier());
+      CancelledCallInvite cancelledCallInvite = callRecord.getCancelledCallInvite();
+      String caller = cancelledCallInvite.getFrom().replaceAll("\\+", "");
+      logger.debug("from: " + caller);
+      String callerShort = caller.substring(caller.length() - 9);
+
+      int callerNumber = Integer.parseInt(callerShort);
+
+      logger.debug("from: " + callerNumber);
+
+      if (!missedCallsMap.containsKey(caller)) {
+        missedCallsMap.put(caller, 0);
+      }
+
+      int missedCallsValue = missedCallsMap.get(caller);
+
+      missedCallsMap.put(caller, ++missedCallsValue);
+
+      cancelNotification(context, callerNumber);
+
+      Notification notification = NotificationUtility.createMissedCallNotificationWithLowImportance(
+              context.getApplicationContext(),
+              callRecord, missedCallsValue);
+      createOrReplaceNotification(context, callerNumber, notification);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void handleDisconnect(final UUID uuid) {
@@ -306,5 +346,22 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private static void cancelNotification(Context context, final int notificationId) {
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
     notificationManager.cancel(notificationId);
+  }
+
+  private boolean isAppVisible() {
+    return ProcessLifecycleOwner
+            .get()
+            .getLifecycle()
+            .getCurrentState()
+            .isAtLeast(Lifecycle.State.STARTED);
+  }
+
+  public static void cancelAllNotifications(Context context) {
+    logger.debug("cancelAllNotifications start");
+    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+
+    notificationManager.cancelAll();
+
+    missedCallsMap.clear();
   }
 }

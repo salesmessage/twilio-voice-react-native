@@ -4,7 +4,6 @@ import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -22,7 +21,6 @@ import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.widget.RemoteViews;
 
 import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
@@ -39,9 +37,11 @@ import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
 import static com.twiliovoicereactnative.VoiceNotificationReceiver.constructMessage;
 
+import com.twilio.voice.CancelledCallInvite;
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
 class NotificationUtility {
+  private static final SDKLog logger = new SDKLog(VoiceNotificationReceiver.class);
   private static final SecureRandom secureRandom = new SecureRandom();
 
   public static int createNotificationIdentifier() {
@@ -235,6 +235,44 @@ class NotificationUtility {
       .build();
   }
 
+  public static Notification createMissedCallNotificationWithLowImportance(@NonNull Context context,
+                                                                             @NonNull final CallRecord callRecord, int missedCallsValue) {
+
+    CancelledCallInvite cancelledCallInvite = Objects.requireNonNull(callRecord.getCancelledCallInvite());
+
+    Intent foregroundIntent = constructMessage(
+            context,
+            Constants.ACTION_PUSH_APP_TO_FOREGROUND,
+            Objects.requireNonNull(VoiceApplicationProxy.getMainActivityClass()),
+            callRecord.getUuid());
+    PendingIntent pendingIntent = constructPendingIntentForActivity(context, foregroundIntent);
+
+    Bundle extras = new Bundle();
+    extras.putString("CALL_SID", cancelledCallInvite.getCallSid());
+
+    String callerInfo = cancelledCallInvite.getFrom();
+    Map<String, String> customParameters = cancelledCallInvite.getCustomParameters();
+    if (customParameters.get("CallerName") != null) {
+      callerInfo = URLDecoder.decode(customParameters.get("CallerName").replaceAll("\\+", "%20"));
+    }
+
+    return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
+            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setContentTitle("Missed call")
+            .setContentText("Show call details in the app")
+            .setExtras(extras)
+            .setAutoCancel(true)
+            .setFullScreenIntent(pendingIntent, true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(Notification.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(pendingIntent)
+            .setContentTitle(missedCallsValue == 1 ? "Missed call" : missedCallsValue + " Missed calls")
+            .setContentText("from: " + callerInfo)
+            .build();
+  }
+
+  //
   public static void createNotificationChannels(@NonNull Context context) {
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
     notificationManager.createNotificationChannelGroup(
