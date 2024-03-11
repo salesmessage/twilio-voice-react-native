@@ -257,7 +257,7 @@ class NotificationUtility {
     }
 
     return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
-            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setSmallIcon(R.drawable.ic_call_missed_white_24dp)
             .setContentTitle("Missed call")
             .setContentText("Show call details in the app")
             .setExtras(extras)
