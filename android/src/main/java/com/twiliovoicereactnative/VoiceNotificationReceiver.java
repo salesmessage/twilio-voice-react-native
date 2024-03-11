@@ -60,7 +60,10 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
   @Override
   public void onReceive(@NonNull Context context, @NonNull Intent intent) {
-    switch (Objects.requireNonNull(intent.getAction())) {
+    String action = Objects.requireNonNull(intent.getAction());
+    logger.log("action: " + action);
+
+    switch (action) {
       case ACTION_INCOMING_CALL:
         handleIncomingCall(context, Objects.requireNonNull(getMessageUUID(intent)));
         break;
@@ -89,6 +92,9 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND:
         logger.warning("BroadcastReceiver received foreground request, ignoring");
+        break;
+      case "android.intent.action.MAIN":
+        cancelAllNotifications(context);
         break;
       default:
         logger.log("Unknown notification, ignoring");
@@ -229,9 +235,9 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
         new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
 
-    if (isAppVisible()) {
-      return;
-    }
+//    if (isAppVisible()) {
+//      return;
+//    }
 
     try {
       // put up notification
