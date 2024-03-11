@@ -133,6 +133,8 @@ class NotificationUtility {
     final int smallIconResId = getSmallIconResource(context);
     final String title = getDisplayName(callRecord.getCallInvite());
 
+    CallInvite callInvite = callRecord.getCallInvite();
+
     Intent foregroundIntent = constructMessage(
       context,
       Constants.ACTION_PUSH_APP_TO_FOREGROUND,
@@ -147,20 +149,40 @@ class NotificationUtility {
       callRecord.getUuid());
     PendingIntent piEndCallIntent = constructPendingIntentForReceiver(context, endCallIntent);
 
-    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
-    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
-    remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+//    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
+//    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
+//    remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.reject, R.color.red),
+            piEndCallIntent
+    ).build();
+
+    Bundle extras = new Bundle();
+    extras.putString("CALL_SID", callInvite.getCallSid());
 
     return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
-      .setSmallIcon(smallIconResId)
-      .setContentTitle(title)
-      .setContentText(getContentBanner(context))
-      .setCategory(Notification.CATEGORY_CALL)
-      .setAutoCancel(false)
-      .setCustomContentView(remoteViews)
-      .setCustomBigContentView(remoteViews)
-      .setContentIntent(pendingIntent)
-      .setFullScreenIntent(pendingIntent, true)
+//      .setSmallIcon(smallIconResId)
+//      .setContentTitle(title)
+//      .setContentText(getContentBanner(context))
+//      .setCategory(Notification.CATEGORY_CALL)
+//      .setAutoCancel(false)
+//      .setCustomContentView(remoteViews)
+//      .setCustomBigContentView(remoteViews)
+//      .setContentIntent(pendingIntent)
+//      .setFullScreenIntent(pendingIntent, true)
+            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setContentTitle("Call in progress")
+            .setContentText("Show call details in the app")
+            .setExtras(extras)
+            .setAutoCancel(true)
+            .addAction(rejectAction)
+            .setFullScreenIntent(pendingIntent, true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(Notification.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(pendingIntent)
       .build();
   }
 
@@ -182,19 +204,34 @@ class NotificationUtility {
       callRecord.getUuid());
     PendingIntent piEndCallIntent = constructPendingIntentForReceiver(context, endCallIntent);
 
-    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
-    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
-    remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+//    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.custom_call_in_progress);
+//    remoteViews.setTextViewText(R.id.make_call_text, getContentBanner(context));
+//    remoteViews.setOnClickPendingIntent(R.id.end_call, piEndCallIntent);
+
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.reject, R.color.red),
+            piEndCallIntent
+    ).build();
 
     return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
-      .setSmallIcon(smallIconResId)
-      .setContentText(getContentBanner(context))
-      .setCategory(Notification.CATEGORY_CALL)
-      .setAutoCancel(false)
-      .setCustomContentView(remoteViews)
-      .setCustomBigContentView(remoteViews)
-      .setContentIntent(piForegroundIntent)
-      .setFullScreenIntent(piForegroundIntent, true)
+//      .setSmallIcon(smallIconResId)
+//      .setContentText(getContentBanner(context))
+//      .setCategory(Notification.CATEGORY_CALL)
+//      .setCustomContentView(remoteViews)
+//      .setCustomBigContentView(remoteViews)
+//      .setContentIntent(piForegroundIntent)
+//      .setFullScreenIntent(piForegroundIntent, true)
+            .setAutoCancel(false)
+            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setContentTitle("Call in progress")
+            .setContentText("Show call details in the app")
+            .addAction(rejectAction)
+            .setFullScreenIntent(piForegroundIntent, true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(Notification.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(piForegroundIntent)
       .build();
   }
 
