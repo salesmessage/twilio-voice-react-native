@@ -325,7 +325,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
 
     // stop active sound (if any)
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
+//    VoiceApplicationProxy.getMediaPlayerManager().stop();
 
     // notify JS layer
     sendJSEvent(
