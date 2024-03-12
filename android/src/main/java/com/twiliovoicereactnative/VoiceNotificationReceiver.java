@@ -138,8 +138,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
 
     // play ringer sound
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
-    VoiceApplicationProxy.getMediaPlayerManager().play(MediaPlayerManager.SoundTable.INCOMING);
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
+    VoiceApplicationProxy.getMediaPlayerManager().play(true, isAppVisible());
 
     // trigger JS layer
     sendJSEvent(
@@ -153,6 +153,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     // find call record
     final CallRecord callRecord =
       Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+
+    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
     // cancel existing notification & put up in call
     Notification notification = NotificationUtility.createCallAnsweredNotificationWithLowImportance(

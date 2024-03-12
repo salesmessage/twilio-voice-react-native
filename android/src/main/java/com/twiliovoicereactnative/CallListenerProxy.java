@@ -80,7 +80,7 @@ class CallListenerProxy implements Call.Listener {
     // create notification & sound
     callRecord.setNotificationId(NotificationUtility.createNotificationIdentifier());
     getAudioSwitchManager().getAudioSwitch().activate();
-    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.RINGTONE);
+//    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.RINGTONE);
     sendMessage(context, Constants.ACTION_RAISE_OUTGOING_CALL_NOTIFICATION, callRecord.getUuid());
 
     // notify JS layer
@@ -145,7 +145,7 @@ class CallListenerProxy implements Call.Listener {
 
     // stop audio & cancel notification
     getMediaPlayerManager().stop();
-    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
+//    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
     getAudioSwitchManager().getAudioSwitch().deactivate();
     sendMessage(context, Constants.ACTION_CANCEL_NOTIFICATION, callRecord.getUuid());
 
