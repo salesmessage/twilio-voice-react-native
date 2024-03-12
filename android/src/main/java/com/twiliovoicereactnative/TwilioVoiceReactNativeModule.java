@@ -54,6 +54,9 @@ import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
 @ReactModule(name = TwilioVoiceReactNativeModule.TAG)
 public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
+  private ProximityManager proximityManager;
+  private EventManager eventManager;
+
   static final String TAG = "TwilioVoiceReactNative";
   private static final SDKLog logger = new SDKLog(TwilioVoiceReactNativeModule.class);
   private static final String GLOBAL_ENV = "com.twilio.voice.env";
@@ -63,6 +66,9 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
 
   public TwilioVoiceReactNativeModule(ReactApplicationContext reactContext) {
     super(reactContext);
+    eventManager = new EventManager(reactContext);
+    proximityManager = new ProximityManager(reactContext, eventManager);
+    CallListenerProxy.proximityManager = proximityManager;
 
     logger.log("instantiation of TwilioVoiceReactNativeModule");
     this.reactContext = reactContext;
@@ -339,6 +345,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void call_disconnect(String uuid, Promise promise) {
     final CallRecord callRecord = validateCallRecord(reactContext, UUID.fromString(uuid), promise);
+
+    proximityManager.stopProximitySensor();
 
     if (null != callRecord) {
       callRecord.getVoiceCall().disconnect();
