@@ -25,15 +25,14 @@ class JSEventEmitter {
   public void sendEvent(String eventName, @Nullable WritableMap params) {
     logger.debug("sendEvent " + eventName + " params " + params);
 
-    if ((null != context.get() && context.get().hasActiveReactInstance())) {
+    if (context != null && (null != context.get() && context.get().hasActiveReactInstance())) {
       context.get()
         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
         .emit(eventName, params);
     } else {
       logger.warning(
         String.format(
-          "attempt to sendEvent without context {%s} or Catalyst instance not active",
-          context.get()));
+          "attempt to sendEvent without context or Catalyst instance not active"));
     }
   }
   public static WritableArray constructJSArray(@NonNull Object...entries) {
