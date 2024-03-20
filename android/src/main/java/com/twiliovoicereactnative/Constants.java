@@ -4,6 +4,7 @@ public class Constants {
   public static final String VOICE_CHANNEL_GROUP = "notification-group";
   public static final String VOICE_CHANNEL_LOW_IMPORTANCE = "notification-channel-low-importance";
   public static final String VOICE_CHANNEL_HIGH_IMPORTANCE = "notification-channel-high-importance";
+  public static final String VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION = "notification-channel-high-importance-with-vibration";
   public static final String VOICE_CHANNEL_DEFAULT_IMPORTANCE = "notification-channel-normal-importance";
   public static final String ACTION_ACCEPT_CALL = "ACTION_ACCEPT_CALL";
   public static final String ACTION_REJECT_CALL = "ACTION_REJECT_CALL";
