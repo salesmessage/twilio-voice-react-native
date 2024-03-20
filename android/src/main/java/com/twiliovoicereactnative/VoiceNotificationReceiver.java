@@ -2,6 +2,7 @@ package com.twiliovoicereactnative;
 
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
+import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION;
 import static com.twiliovoicereactnative.JSEventEmitter.constructJSMap;
 import static com.twiliovoicereactnative.CommonConstants.ScopeVoice;
 import static com.twiliovoicereactnative.CommonConstants.VoiceEventCallInvite;
@@ -133,8 +134,10 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     Notification notification = NotificationUtility.createIncomingCallNotification(
       context.getApplicationContext(),
       callRecord,
-      VOICE_CHANNEL_HIGH_IMPORTANCE,
+            VoiceApplicationProxy.getMediaPlayerManager().isRingerModeVibrate() ?
+                    VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION : VOICE_CHANNEL_HIGH_IMPORTANCE,
       true);
+//    notification.flags = Notification.FLAG_INSISTENT;
     createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
 
     // play ringer sound

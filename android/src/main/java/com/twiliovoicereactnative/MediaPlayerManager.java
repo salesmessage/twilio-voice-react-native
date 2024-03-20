@@ -74,10 +74,14 @@ class MediaPlayerManager {
     }
   }
 
+  public boolean isRingerModeVibrate() {
+    return audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE;
+  }
+
   public void play(Boolean enableSpeakerphone, Boolean isAppVisible) {
     logger.debug("play started");
     try {
-      if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
+      if (isRingerModeVibrate()) {
         logger.debug("Enabling vibration");
         long[] pattern = {0, 300, 1000};
         vibe.vibrate(pattern, 0);

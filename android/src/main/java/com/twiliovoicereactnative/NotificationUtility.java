@@ -34,6 +34,7 @@ import com.twilio.voice.CallInvite;
 
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
+import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
 import static com.twiliovoicereactnative.VoiceNotificationReceiver.constructMessage;
 
@@ -282,6 +283,7 @@ class NotificationUtility {
     for (String channelId:
       new String[]{
         VOICE_CHANNEL_HIGH_IMPORTANCE,
+        VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION,
         VOICE_CHANNEL_DEFAULT_IMPORTANCE,
         VOICE_CHANNEL_LOW_IMPORTANCE}) {
       notificationManager.createNotificationChannel(
@@ -297,11 +299,35 @@ class NotificationUtility {
   private static NotificationChannelCompat createNotificationChannel(@NonNull Context context,
                                                                      @NonNull final String voiceChannelId) {
     final int notificationImportance = getChannelImportance(voiceChannelId);
+    long[] pattern = new long[]{
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50,
+            0, 300, 1000, 50};
     NotificationChannelCompat.Builder voiceChannelBuilder =
       new NotificationChannelCompat.Builder(voiceChannelId, notificationImportance)
         .setName("Primary Voice Channel")
         .setLightColor(Color.GREEN)
         .setGroup(Constants.VOICE_CHANNEL_GROUP);
+
+    if (voiceChannelId == VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION) {
+      voiceChannelBuilder.setVibrationPattern(pattern);
+    }
+
     // low-importance notifications don't have sound
     if (!Constants.VOICE_CHANNEL_LOW_IMPORTANCE.equals(voiceChannelId)) {
       // set audio attributes for channel
@@ -317,6 +343,7 @@ class NotificationUtility {
 
   private static int getChannelImportance(@NonNull final String voiceChannel) {
     final Map<String, Integer> importanceMapping = Map.of(
+            Constants.VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION, NotificationManagerCompat.IMPORTANCE_HIGH,
       Constants.VOICE_CHANNEL_HIGH_IMPORTANCE, NotificationManagerCompat.IMPORTANCE_HIGH,
       Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE, NotificationManagerCompat.IMPORTANCE_DEFAULT,
       Constants.VOICE_CHANNEL_LOW_IMPORTANCE, NotificationManagerCompat.IMPORTANCE_LOW);
@@ -333,16 +360,6 @@ class NotificationUtility {
     return voiceChannelId;
   }
 
-//  private static String getDisplayName(@NonNull CallInvite callInvite) {
-//    String title = callInvite.getFrom();
-//    Map<String, String> customParameters = callInvite.getCustomParameters();
-//    // If "displayName" is passed as a custom parameter in the TwiML application,
-//    // it will be used as the caller name.
-//    if (customParameters.get(Constants.DISPLAY_NAME) != null) {
-//      title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
-//    }
-//    return title;
-//  }
 
   private static String getDisplayName(CallInvite callInvite) {
     String title = callInvite.getFrom();
