@@ -102,18 +102,22 @@ class MediaPlayerManager {
           audioManager.setSpeakerphoneOn(true);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-          if (isBluetoothHeadsetConnected()) {
-            logger.debug("Switching to bluetooth device");
-            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-            audioManager.startBluetoothSco();
-            audioManager.setBluetoothScoOn(true);
-          }
-        }
+        enableBluetooth();
       }
     } catch (Exception e) {
       logger.debug("Error occurred during playing sound");
       e.printStackTrace();
+    }
+  }
+
+  public void enableBluetooth() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      if (isBluetoothHeadsetConnected()) {
+        logger.debug("Switching to bluetooth device");
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        audioManager.startBluetoothSco();
+        audioManager.setBluetoothScoOn(true);
+      }
     }
   }
 
