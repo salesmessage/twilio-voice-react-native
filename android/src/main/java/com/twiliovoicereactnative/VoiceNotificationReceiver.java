@@ -95,7 +95,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         logger.warning("BroadcastReceiver received foreground request, ignoring");
         break;
       case "android.intent.action.MAIN":
-        cancelAllNotifications(context);
+//        cancelAllNotifications(context);
         break;
       default:
         logger.log("Unknown notification, ignoring");

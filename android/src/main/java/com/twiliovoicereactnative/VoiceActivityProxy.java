@@ -85,7 +85,7 @@ public class VoiceActivityProxy {
     }
 
     if (action.equals(Constants.ACTION_PUSH_APP_TO_FOREGROUND)) {
-      VoiceNotificationReceiver.cancelAllNotifications(context);
+//      VoiceNotificationReceiver.cancelAllNotifications(context);
     }
   }
 
