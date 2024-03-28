@@ -47,7 +47,9 @@ import static com.twiliovoicereactnative.VoiceNotificationReceiver.sendMessage;
 import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.*;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
 import android.util.Pair;
 
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
@@ -228,6 +230,18 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void voice_getVersion(Promise promise) {
     promise.resolve(Voice.getVersion());
+  }
+
+  @ReactMethod
+  public void voice_canUseFullScreenIntent(Promise promise) {
+    Context context = getReactApplicationContext();
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    if (Build.VERSION.SDK_INT >= 34) {
+      Boolean canUseFullScreenIntent = notificationManager.canUseFullScreenIntent();
+      promise.resolve(canUseFullScreenIntent);
+    } else {
+      promise.resolve(true);
+    }
   }
 
   @ReactMethod
