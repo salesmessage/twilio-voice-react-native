@@ -5,6 +5,9 @@ import static com.twiliovoicereactnative.VoiceNotificationReceiver.sendMessage;
 
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
 import android.os.PowerManager;
 
 import androidx.annotation.NonNull;
@@ -40,14 +43,21 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService impl
     logger.debug("Bundle data: " + remoteMessage.getData());
     logger.debug("From: " + remoteMessage.getFrom());
 
-//    PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
-//    boolean isScreenOn = pm.isInteractive(); // check if screen is on
-//    if (!isScreenOn) {
-//      PowerManager.WakeLock wl = pm.newWakeLock(
-//        PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
-//        "VoiceFirebaseMessagingService:notificationLock");
-//      wl.acquire(30000); //set your time in milliseconds
-//    }
+    NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+    if (Build.VERSION.SDK_INT >= 34) {
+      Boolean canUseFullScreenIntent = notificationManager.canUseFullScreenIntent();
+
+      if (!canUseFullScreenIntent) {
+        PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+        boolean isScreenOn = pm.isInteractive(); // check if screen is on
+        if (!isScreenOn) {
+          PowerManager.WakeLock wl = pm.newWakeLock(
+                  PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                  "VoiceFirebaseMessagingService:notificationLock");
+          wl.acquire(30000); //set your time in milliseconds
+        }
+      }
+    }
 
     // Check if message contains a data payload.
     if (remoteMessage.getData().size() > 0) {
