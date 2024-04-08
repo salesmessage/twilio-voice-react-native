@@ -60,6 +60,7 @@ public class CommonConstants {
   public static final String VoiceEventCallInvite = "voiceEventCallInvite";
   public static final String VoiceEventCallInviteAccepted = "voiceEventCallInviteAccepted";
   public static final String VoiceEventCallInviteNotificationTapped = "voiceEventCallInviteNotificationTapped";
+  public static final String VoiceEventMissedCallNotificationTapped = "voiceEventMissedCallNotificationTapped";
   public static final String VoiceEventCallInviteRejected = "voiceEventCallInviteRejected";
   public static final String VoiceEventCallInviteCancelled = "voiceEventCallInviteCancelled";
 

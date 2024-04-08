@@ -209,6 +209,17 @@ export declare interface Voice {
     listener: Voice.Listener.CallInviteNotificationTapped
   ): this;
 
+
+  addListener(
+    missedCallNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped,
+    listener: Voice.Listener.MissedCallNotificationTapped
+  ): this;
+  /** {@inheritDoc (Voice:interface).(addListener:4)} */
+  on(
+    callInviteNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped,
+    listener: Voice.Listener.CallInviteNotificationTapped
+  ): this;
+
   /**
    * Call invite rejected event. Raised when a pending incoming call invite has
    * been rejected.
@@ -411,6 +422,8 @@ export class Voice extends EventEmitter {
       [Constants.VoiceEventCallInviteAccepted]: this._handleCallInviteAccepted,
       [Constants.VoiceEventCallInviteNotificationTapped]:
         this._handleCallInviteNotificationTapped,
+        [Constants.VoiceEventMissedCallNotificationTapped]:
+        this._handleMissedCallNotificationTapped,
       [Constants.VoiceEventCallInviteRejected]: this._handleCallInviteRejected,
       [Constants.VoiceEventCallInviteCancelled]:
         this._handleCancelledCallInvite,
@@ -579,6 +592,25 @@ export class Voice extends EventEmitter {
 
     this.emit(Voice.Event.CallInviteNotificationTapped, callInvite);
 
+  };
+
+  private _handleMissedCallNotificationTapped = (
+    nativeVoiceEvent: NativeVoiceEvent
+  ) => {
+    if (
+      nativeVoiceEvent.type !== Constants.VoiceEventMissedCallNotificationTapped
+    ) {
+      throw new Error(
+        'Incorrect "voice#callInviteNotificationTapped" handler called for ' +
+          `type "${nativeVoiceEvent.type}".`
+      );
+    }
+
+    // this.emit(Voice.Event.CallInviteNotificationTapped);
+
+    const { callInvite: callInviteInfo } = nativeVoiceEvent;
+
+    this.emit(Voice.Event.MissedCallNotificationTapped, callInviteInfo);
   };
 
   /**
@@ -1032,6 +1064,8 @@ export namespace Voice {
      */
     'CallInviteNotificationTapped' = 'callInviteNotificationTapped',
 
+    'MissedCallNotificationTapped' = 'missedCallNotificationTapped',
+
     /**
      * Raised when an incoming call invite has been rejected.
      *
@@ -1141,6 +1175,8 @@ export namespace Voice {
      * See {@link (Voice:interface).(addListener:4)}.
      */
     export type CallInviteNotificationTapped = () => void;
+
+    export type MissedCallNotificationTapped = () => void;
 
     /**
      * Call invite rejected event listener. This should be the function

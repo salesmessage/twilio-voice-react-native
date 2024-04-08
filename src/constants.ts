@@ -58,6 +58,7 @@ export enum Constants {
   'VoiceEventCallInvite' = 'voiceEventCallInvite',
   'VoiceEventCallInviteAccepted' = 'voiceEventCallInviteAccepted',
   'VoiceEventCallInviteNotificationTapped' = 'voiceEventCallInviteNotificationTapped',
+  'VoiceEventMissedCallNotificationTapped' = 'voiceEventMissedCallNotificationTapped',
   'VoiceEventCallInviteRejected' = 'voiceEventCallInviteRejected',
   'VoiceEventCallInviteCancelled' = 'voiceEventCallInviteCancelled',
 
