@@ -1,5 +1,7 @@
 package com.twiliovoicereactnative;
 
+import static com.twiliovoicereactnative.CommonConstants.VoiceEventMissedCallNotificationTapped;
+import static com.twiliovoicereactnative.Constants.ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL;
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION;
@@ -90,6 +92,9 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         handleForegroundAndDeprioritizeIncomingCallNotification(
           context,
           Objects.requireNonNull(getMessageUUID(intent)));
+        break;
+      case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
+        handleMissedCallNotificationClick(context, intent);
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND:
         logger.warning("BroadcastReceiver received foreground request, ignoring");
@@ -336,6 +341,25 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         new Pair<>(VoiceEventType, VoiceEventCallInviteNotificationTapped),
         new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))
       ));
+  }
+
+  private void handleMissedCallNotificationClick(Context context, Intent intent) {
+    logger.debug("Missed Call Notification Click Message Received");
+
+    String INBOX_DATA = (String) intent.getSerializableExtra("INBOX_DATA");
+    String CONTACT_DATA = (String) intent.getSerializableExtra("CONTACT_DATA");
+
+    WritableMap payload = constructJSMap(
+            new Pair<>("inbox", INBOX_DATA),
+            new Pair<>("contact", CONTACT_DATA)
+    );
+
+    // notify JS layer
+    sendJSEvent(
+            constructJSMap(
+                    new Pair<>(VoiceEventType, VoiceEventMissedCallNotificationTapped),
+                    new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, payload)
+            ));
   }
 
   private static void sendJSEvent(@NonNull WritableMap event) {

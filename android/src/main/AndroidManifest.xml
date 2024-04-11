@@ -32,6 +32,7 @@
         <action android:name="ACTION_RAISE_OUTGOING_CALL_NOTIFICATION" />
         <action android:name="ACTION_CANCEL_NOTIFICATION" />
         <action android:name="ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION" />
+        <action android:name="ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL" />
         <action android:name="ACTION_FOREGROUND_APPLICATION" />
       </intent-filter>
     </receiver>

@@ -4,6 +4,7 @@ import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -241,12 +242,39 @@ class NotificationUtility {
 
     CancelledCallInvite cancelledCallInvite = Objects.requireNonNull(callRecord.getCancelledCallInvite());
 
-    Intent foregroundIntent = constructMessage(
+//    Intent foregroundIntent = constructMessage(
+//            context,
+//            Constants.ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL,
+//            Objects.requireNonNull(VoiceApplicationProxy.getMainActivityClass()),
+//            callRecord.getUuid());
+
+    String inbox_data = "{}";
+    String contact_data = "{}";
+
+    try {
+      inbox_data = cancelledCallInvite.getCustomParameters().get("inbox").toString();
+      contact_data = cancelledCallInvite.getCustomParameters().get("contact").toString();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    Intent foregroundIntent = new Intent(context.getApplicationContext(),
+            Objects.requireNonNull(VoiceApplicationProxy.getMainActivityClass()));
+
+    Random generator = new Random();
+
+    foregroundIntent.setAction(Constants.ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL);
+    foregroundIntent.putExtra(Constants.MSG_KEY_UUID, callRecord.getUuid());
+    foregroundIntent.putExtra("INBOX_DATA", inbox_data);
+    foregroundIntent.putExtra("CONTACT_DATA", contact_data);
+
+//    PendingIntent pendingIntent = constructPendingIntentForActivity(context, foregroundIntent);
+
+    PendingIntent pendingIntent = PendingIntent.getActivity(
             context,
-            Constants.ACTION_PUSH_APP_TO_FOREGROUND,
-            Objects.requireNonNull(VoiceApplicationProxy.getMainActivityClass()),
-            callRecord.getUuid());
-    PendingIntent pendingIntent = constructPendingIntentForActivity(context, foregroundIntent);
+            generator.nextInt(),
+            foregroundIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Bundle extras = new Bundle();
     extras.putString("CALL_SID", cancelledCallInvite.getCallSid());

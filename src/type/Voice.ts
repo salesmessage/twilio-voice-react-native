@@ -4,6 +4,7 @@ import type {
   NativeCallInviteEvent,
   NativeCallInviteAcceptedEvent,
   NativeCallInviteNotificationTappedEvent,
+  NativeMissedCallNotificationTappedEvent,
   NativeCallInviteRejectedEvent,
   NativeCancelledCallInviteEvent,
 } from './CallInvite';
@@ -22,6 +23,7 @@ export type NativeVoiceEvent =
   | NativeCallInviteEvent
   | NativeCallInviteAcceptedEvent
   | NativeCallInviteNotificationTappedEvent
+  | NativeMissedCallNotificationTappedEvent
   | NativeCallInviteRejectedEvent
   | NativeCancelledCallInviteEvent
   | NativeErrorEvent
@@ -33,6 +35,7 @@ export type NativeVoiceEventType =
   | Constants.VoiceEventCallInvite
   | Constants.VoiceEventCallInviteAccepted
   | Constants.VoiceEventCallInviteNotificationTapped
+  | Constants.VoiceEventMissedCallNotificationTapped
   | Constants.VoiceEventCallInviteRejected
   | Constants.VoiceEventCallInviteCancelled
   | Constants.VoiceEventError
