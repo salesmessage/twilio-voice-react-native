@@ -143,6 +143,9 @@ export declare interface Voice {
     addListener(callInviteNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped, listener: Voice.Listener.CallInviteNotificationTapped): this;
     /** {@inheritDoc (Voice:interface).(addListener:4)} */
     on(callInviteNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped, listener: Voice.Listener.CallInviteNotificationTapped): this;
+    addListener(missedCallNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
+    /** {@inheritDoc (Voice:interface).(addListener:4)} */
+    on(callInviteNotificationTappedEvent: Voice.Event.CallInviteNotificationTapped, listener: Voice.Listener.CallInviteNotificationTapped): this;
     /**
      * Call invite rejected event. Raised when a pending incoming call invite has
      * been rejected.
@@ -331,6 +334,7 @@ export declare class Voice extends EventEmitter {
      * @param nativeVoiceEvent - A `Voice` event directly from the native layer.
      */
     private _handleCallInviteNotificationTapped;
+    private _handleMissedCallNotificationTapped;
     /**
      * Call invite cancelled handler. Creates a
      * {@link (CancelledCallInvite:class)} from the info raised by the native
@@ -394,6 +398,7 @@ export declare class Voice extends EventEmitter {
      *  - Resolves with a string representing the version of the native SDK.
      */
     getVersion(): Promise<string>;
+    canUseFullScreenIntent(): Promise<boolean>;
     /**
      * Get the Device token from the native layer.
      * @returns a Promise that resolves with a string representing the Device
@@ -575,6 +580,7 @@ export declare namespace Voice {
          * See {@link (Voice:interface).(addListener:4)}
          */
         'CallInviteNotificationTapped' = "callInviteNotificationTapped",
+        'MissedCallNotificationTapped' = "missedCallNotificationTapped",
         /**
          * Raised when an incoming call invite has been rejected.
          *
@@ -670,6 +676,7 @@ export declare namespace Voice {
          * See {@link (Voice:interface).(addListener:4)}.
          */
         type CallInviteNotificationTapped = () => void;
+        type MissedCallNotificationTapped = () => void;
         /**
          * Call invite rejected event listener. This should be the function
          * signature of an event listener bound to the
