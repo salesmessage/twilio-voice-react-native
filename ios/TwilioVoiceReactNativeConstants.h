@@ -66,6 +66,7 @@ static NSString * const kTwilioVoiceReactNativeCancelledCallInviteInfoCustomPara
 static NSString * const kTwilioVoiceReactNativeVoiceEventCallInvite = @"voiceEventCallInvite";
 static NSString * const kTwilioVoiceReactNativeVoiceEventCallInviteAccepted = @"voiceEventCallInviteAccepted";
 static NSString * const kTwilioVoiceReactNativeVoiceEventCallInviteNotificationTapped = @"voiceEventCallInviteNotificationTapped";
+static NSString * const kTwilioVoiceReactNativeVoiceEventMissedCallNotificationTapped = @"voiceEventMissedCallNotificationTapped";
 static NSString * const kTwilioVoiceReactNativeVoiceEventCallInviteRejected = @"voiceEventCallInviteRejected";
 static NSString * const kTwilioVoiceReactNativeVoiceEventCallInviteCancelled = @"voiceEventCallInviteCancelled";
 
