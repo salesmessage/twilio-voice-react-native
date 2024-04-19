@@ -59,6 +59,7 @@ import com.twilio.voice.AcceptOptions;
 
 
 public class VoiceNotificationReceiver extends BroadcastReceiver {
+  private static boolean isCallInProgress = false;
   private static final SDKLog logger = new SDKLog(VoiceNotificationReceiver.class);
   private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
   @Override
@@ -71,6 +72,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         handleIncomingCall(context, Objects.requireNonNull(getMessageUUID(intent)));
         break;
       case ACTION_ACCEPT_CALL:
+        isCallInProgress = true;
         handleAccept(context, Objects.requireNonNull(getMessageUUID(intent)));
         break;
       case ACTION_REJECT_CALL:
@@ -80,13 +82,18 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
         handleCancelCall(context, Objects.requireNonNull(getMessageUUID(intent)));
         break;
       case ACTION_CALL_DISCONNECT:
+        isCallInProgress = false;
         handleDisconnect(Objects.requireNonNull(getMessageUUID(intent)));
+        VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_RAISE_OUTGOING_CALL_NOTIFICATION:
+        isCallInProgress = true;
         handleRaiseOutgoingCallNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
         break;
       case ACTION_CANCEL_NOTIFICATION:
+        isCallInProgress = false;
         handleCancelNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
+        VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION:
         handleForegroundAndDeprioritizeIncomingCallNotification(
@@ -147,7 +154,9 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
     // play ringer sound
 //    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
-    VoiceApplicationProxy.getMediaPlayerManager().play(true, isAppVisible());
+    if (!isCallInProgress) {
+      VoiceApplicationProxy.getMediaPlayerManager().play(true, isAppVisible());
+    }
 
     // trigger JS layer
     sendJSEvent(
@@ -207,7 +216,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+
+//  VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
     // reject call
     callRecord.getCallInvite().reject(context.getApplicationContext());
@@ -236,7 +246,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
     // notify JS layer
     sendJSEvent(
