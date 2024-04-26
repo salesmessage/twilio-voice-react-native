@@ -38,7 +38,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import io.embrace.android.embracesdk.Embrace;
+
 class CallListenerProxy implements Call.Listener {
+  private static final String EventTag = "[Android CallListenerProxy]";
   private static final SDKLog logger = new SDKLog(CallListenerProxy.class);
   private final UUID uuid;
   private final Context context;
@@ -105,15 +108,21 @@ class CallListenerProxy implements Call.Listener {
     callRecord.setTimestamp(new Date());
     getMediaPlayerManager().stop();
 
+    Embrace.getInstance().logInfo(EventTag + " onConnected::CallRecordRetrievedFromDB");
+
     if (proximityManager != null) {
       proximityManager.startProximitySensor();
     }
+
+    Embrace.getInstance().logInfo(EventTag + " onConnected::SendingJSEvent");
 
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, CallEventConnected),
         new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord))));
+
+    Embrace.getInstance().logInfo(EventTag + " onConnected::JSEventSent");
   }
 
   @Override
@@ -152,6 +161,8 @@ class CallListenerProxy implements Call.Listener {
     // find & update call record
     CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
 
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::CallRecordRetrievedFromDB");
+
     // stop audio & cancel notification
     getMediaPlayerManager().stop();
 //    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
@@ -162,12 +173,15 @@ class CallListenerProxy implements Call.Listener {
       proximityManager.stopProximitySensor();
     }
 
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::SendingJSEvent");
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, CallEventDisconnected),
         new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord)),
         new Pair<>(VoiceErrorKeyError, serializeVoiceException(callException))));
+
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::JSEventSent");
   }
 
   @Override

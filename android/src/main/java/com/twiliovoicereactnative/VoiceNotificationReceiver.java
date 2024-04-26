@@ -57,15 +57,20 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import com.facebook.react.bridge.WritableMap;
 import com.twilio.voice.AcceptOptions;
 
+import io.embrace.android.embracesdk.Embrace;
 
 public class VoiceNotificationReceiver extends BroadcastReceiver {
   private static boolean isCallInProgress = false;
+
+  private static final String EventTag = "[Android VoiceNotificationReceiver]";
   private static final SDKLog logger = new SDKLog(VoiceNotificationReceiver.class);
   private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
   @Override
   public void onReceive(@NonNull Context context, @NonNull Intent intent) {
     String action = Objects.requireNonNull(intent.getAction());
     logger.log("action: " + action);
+
+    Embrace.getInstance().logInfo(EventTag + " Action::" + action);
 
     switch (action) {
       case ACTION_INCOMING_CALL:
@@ -136,33 +141,49 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   }
 
   private void handleIncomingCall(Context context, final UUID uuid) {
-    logger.debug("Incoming_Call Message Received");
-    // find call record
-    CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    try {
+      logger.debug("Incoming_Call Message Received");
+      // find call record
+      CallRecord callRecord =
+              Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
 
-    // put up notification
-    callRecord.setNotificationId(NotificationUtility.createNotificationIdentifier());
-    Notification notification = NotificationUtility.createIncomingCallNotification(
-      context.getApplicationContext(),
-      callRecord,
-            VoiceApplicationProxy.getMediaPlayerManager().isRingerModeVibrate() ?
-                    VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION : VOICE_CHANNEL_HIGH_IMPORTANCE,
-      true);
+      Embrace.getInstance().logInfo(EventTag + " IncomingCall::CallRecordRetrievedFromDB");
+
+      // put up notification
+      callRecord.setNotificationId(NotificationUtility.createNotificationIdentifier());
+      Notification notification = NotificationUtility.createIncomingCallNotification(
+              context.getApplicationContext(),
+              callRecord,
+              VoiceApplicationProxy.getMediaPlayerManager().isRingerModeVibrate() ?
+                      VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION : VOICE_CHANNEL_HIGH_IMPORTANCE,
+              true);
 //    notification.flags = Notification.FLAG_INSISTENT;
-    createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
+      createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
 
-    // play ringer sound
+      Embrace.getInstance().logInfo(EventTag + " IncomingCall::NotificationCreated");
+
+      // play ringer sound
 //    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
-    if (!isCallInProgress) {
-      VoiceApplicationProxy.getMediaPlayerManager().play(true, isAppVisible());
-    }
+      if (!isCallInProgress) {
+        VoiceApplicationProxy.getMediaPlayerManager().play(true, isAppVisible());
+      }
 
-    // trigger JS layer
-    sendJSEvent(
-      constructJSMap(
-        new Pair<>(VoiceEventType, VoiceEventCallInvite),
-        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+      Embrace.getInstance().logInfo(EventTag + " IncomingCall::SendingJSEvent");
+
+      // trigger JS layer
+      sendJSEvent(
+              constructJSMap(
+                      new Pair<>(VoiceEventType, VoiceEventCallInvite),
+                      new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+
+      Embrace.getInstance().logInfo(EventTag + " IncomingCall::JSEventSent");
+    } catch (Exception e) {
+      HashMap props = new HashMap<String, Integer>();
+      props.put("errMessage", e.getMessage());
+
+      Embrace.getInstance().logError(EventTag + " IncomingCall::Error::", props);
+      e.printStackTrace();
+    }
   }
 
   private void handleAccept(Context context, final UUID uuid) {
@@ -171,6 +192,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     final CallRecord callRecord =
       Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
 
+    Embrace.getInstance().logInfo(EventTag + " AcceptCall::CallRecordRetrievedFromDB");
+
     VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
     // cancel existing notification & put up in call
@@ -178,6 +201,8 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
       context.getApplicationContext(),
       callRecord);
     createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
+
+    Embrace.getInstance().logInfo(EventTag + " AcceptCall::NotificationCreated");
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
@@ -198,11 +223,14 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
       callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
     }
 
+    Embrace.getInstance().logInfo(EventTag + " AcceptCall::SendingJSEvent");
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, VoiceEventCallInviteAccepted),
         new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+
+    Embrace.getInstance().logInfo(EventTag + " AcceptCall::JSEventSent");
   }
 
   private void handleReject(Context context, final UUID uuid) {
@@ -211,8 +239,12 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     final CallRecord callRecord =
       Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
 
+    Embrace.getInstance().logInfo(EventTag + " RejectedCall::CallRecordRetrievedFromDB");
+
     // take down notification
     cancelNotification(context, callRecord.getNotificationId());
+
+    Embrace.getInstance().logInfo(EventTag + " RejectedCall::NotificationCancelled");
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
@@ -228,37 +260,54 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
       callRecord.getCallRejectedPromise().resolve(callRecord.getUuid().toString());
     }
 
+    Embrace.getInstance().logInfo(EventTag + " RejectedCall::SendingJSEvent");
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, VoiceEventCallInviteRejected),
         new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+
+    Embrace.getInstance().logInfo(EventTag + " RejectedCall::JSEventSent");
   }
 
   private void handleCancelCall(Context context, final UUID uuid) {
-    logger.debug("Cancel_Call Message Received");
-    // find call record
-    final CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+    CallRecord callRecord;
 
-    // take down notification
-    cancelNotification(context, callRecord.getNotificationId());
+    try {
+      logger.debug("Cancel_Call Message Received");
+      // find call record
+      callRecord =
+              Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
 
-    // stop ringer sound
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::CallRecordRetrievedFromDB");
+
+      // take down notification
+      cancelNotification(context, callRecord.getNotificationId());
+
+      // stop ringer sound
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
 
 //    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
-    // notify JS layer
-    sendJSEvent(
-      constructJSMap(
-        new Pair<>(VoiceEventType, VoiceEventCallInviteCancelled),
-        new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
-        new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::SendingJSEvent");
+      // notify JS layer
+      sendJSEvent(
+              constructJSMap(
+                      new Pair<>(VoiceEventType, VoiceEventCallInviteCancelled),
+                      new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
+                      new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
 
-//    if (isAppVisible()) {
-//      return;
-//    }
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::JSEventSent");
+
+    } catch (Exception e) {
+      HashMap props = new HashMap<String, Integer>();
+      props.put("errMessage", e.getMessage());
+
+      Embrace.getInstance().logError(EventTag + " CancelledCall::Error", props);
+      e.printStackTrace();
+      return;
+    }
+
 
     try {
       // put up notification
@@ -286,7 +335,13 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
               context.getApplicationContext(),
               callRecord, missedCallsValue);
       createOrReplaceNotification(context, callerNumber, notification);
+
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::MissedCallNotificationCreated");
     } catch (Exception e) {
+      HashMap props = new HashMap<String, Integer>();
+      props.put("errMessage", e.getMessage());
+
+      Embrace.getInstance().logError(EventTag + " CancelledCall::MissedCallNotificationError", props);
       e.printStackTrace();
     }
   }
@@ -313,11 +368,15 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     final CallRecord callRecord =
       Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
 
+    Embrace.getInstance().logInfo(EventTag + " OutgoingCall::CallRecordRetrievedFromDB");
+
     // put up outgoing call notification
     Notification notification = NotificationUtility.createOutgoingCallNotificationWithLowImportance(
       context.getApplicationContext(),
       callRecord);
     createOrReplaceNotification(context, callRecord.getNotificationId(), notification);
+
+    Embrace.getInstance().logInfo(EventTag + " OutgoingCall::NotificationCreated");
   }
 
   private void handleCancelNotification(Context context, final UUID uuid) {
