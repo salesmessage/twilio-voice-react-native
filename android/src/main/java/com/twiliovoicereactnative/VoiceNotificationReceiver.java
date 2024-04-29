@@ -305,16 +305,23 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   }
 
   private void handleCancelCall(Context context, final UUID uuid) {
-    CallRecord callRecord;
-
+    logger.debug("Cancel_Call Message Received");
+    CallRecord callRecord = null;
     try {
-      logger.debug("Cancel_Call Message Received");
-      // find call record
-      callRecord =
-              Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
 
       Embrace.getInstance().logInfo(EventTag + " CancelledCall::CallRecordRetrievedFromDB");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::CallRecordNotFoundInDB");
+      return;
+    }
+
+    try {
       // take down notification
       cancelNotification(context, callRecord.getNotificationId());
 
