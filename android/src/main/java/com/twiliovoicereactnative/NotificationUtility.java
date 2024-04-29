@@ -55,9 +55,6 @@ class NotificationUtility {
                                                             @NonNull final String channelImportance,
                                                             boolean fullScreenIntent) {
     CallInvite callInvite = callRecord.getCallInvite();
-    final int smallIconResId = getSmallIconResource(context);
-    final String title = getDisplayName(callRecord.getCallInvite());
-    final Bitmap icon = constructBitmap(context, R.drawable.ic_call_end_white_24dp);
 
     Intent foregroundIntent = constructMessage(
       context,
@@ -87,7 +84,9 @@ class NotificationUtility {
 //    remoteViews.setOnClickPendingIntent(R.id.button_decline, piRejectIntent);
 
     Bundle extras = new Bundle();
-    extras.putString("CALL_SID", callInvite.getCallSid());
+    if (callInvite != null) {
+      extras.putString("CALL_SID", callInvite.getCallSid());
+    }
 
     NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(
             android.R.drawable.ic_menu_call,
@@ -390,19 +389,24 @@ class NotificationUtility {
 
 
   private static String getDisplayName(CallInvite callInvite) {
-    String title = callInvite.getFrom();
-    Map<String, String> customParameters = callInvite.getCustomParameters();
-    // If "displayName" is passed as a custom parameter in the TwiML application,
-    // it will be used as the caller name.
-    if (customParameters.get(Constants.DISPLAY_NAME) != null) {
-      title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
-    }
+    try {
+      String title = callInvite.getFrom();
+      Map<String, String> customParameters = callInvite.getCustomParameters();
+      // If "displayName" is passed as a custom parameter in the TwiML application,
+      // it will be used as the caller name.
+      if (customParameters.get(Constants.DISPLAY_NAME) != null) {
+        title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
+      }
 
-    if (customParameters.get("CallerName") != null) {
-      title = URLDecoder.decode(customParameters.get("CallerName").replaceAll("\\+", "%20"));
-    }
+      if (customParameters.get("CallerName") != null) {
+        title = URLDecoder.decode(customParameters.get("CallerName").replaceAll("\\+", "%20"));
+      }
 
-    return title;
+      return title;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Unknown caller";
+    }
   }
 
   private static String getContentBanner(@NonNull Context context) {
