@@ -189,8 +189,19 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private void handleAccept(Context context, final UUID uuid) {
     logger.debug("Accept_Call Message Received");
     // find call record
-    final CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " AcceptCall::CallRecordNotFoundInDB");
+      return;
+    }
 
     Embrace.getInstance().logInfo(EventTag + " AcceptCall::CallRecordRetrievedFromDB");
 
@@ -402,6 +413,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     }
 
     if (callRecord == null) {
+      Embrace.getInstance().logInfo(EventTag + " handleForegroundAndDeprioritizeIncomingCallNotification::CallRecordNotFoundInDB");
       return;
     }
     
