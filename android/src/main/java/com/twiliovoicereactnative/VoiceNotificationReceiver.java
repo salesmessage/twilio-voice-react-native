@@ -70,40 +70,52 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     String action = Objects.requireNonNull(intent.getAction());
     logger.log("action: " + action);
 
+    UUID uuid = null;
+
+    try {
+      uuid = Objects.requireNonNull(getMessageUUID(intent));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (uuid == null) {
+      Embrace.getInstance().logWarning(EventTag + " UUID_NOT_DEFINED");
+      return;
+    }
+
     Embrace.getInstance().logInfo(EventTag + " Action::" + action);
 
     switch (action) {
       case ACTION_INCOMING_CALL:
-        handleIncomingCall(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleIncomingCall(context, uuid);
         break;
       case ACTION_ACCEPT_CALL:
         isCallInProgress = true;
-        handleAccept(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleAccept(context, uuid);
         break;
       case ACTION_REJECT_CALL:
-        handleReject(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleReject(context, uuid);
         break;
       case ACTION_CANCEL_CALL:
-        handleCancelCall(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleCancelCall(context, uuid);
         break;
       case ACTION_CALL_DISCONNECT:
         isCallInProgress = false;
-        handleDisconnect(Objects.requireNonNull(getMessageUUID(intent)));
+        handleDisconnect(uuid);
         VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_RAISE_OUTGOING_CALL_NOTIFICATION:
         isCallInProgress = true;
-        handleRaiseOutgoingCallNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleRaiseOutgoingCallNotification(context, uuid);
         break;
       case ACTION_CANCEL_NOTIFICATION:
         isCallInProgress = false;
-        handleCancelNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleCancelNotification(context, uuid);
         VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION:
         handleForegroundAndDeprioritizeIncomingCallNotification(
-          context,
-          Objects.requireNonNull(getMessageUUID(intent)));
+          context, uuid);
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
         handleMissedCallNotificationClick(context, intent);
