@@ -394,7 +394,17 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     logger.debug("Foreground & Deprioritize Incoming Call Notification Message Received");
 
     // cancel existing notification & put up in call
-    final CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      return;
+    }
+    
     Notification notification = NotificationUtility.createIncomingCallNotification(
       context.getApplicationContext(),
       callRecord,
