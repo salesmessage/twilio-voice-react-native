@@ -247,8 +247,19 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private void handleReject(Context context, final UUID uuid) {
     logger.debug("Reject_Call Message Received");
     // find call record
-    final CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " RejectedCall::CallRecordNotFoundInDB");
+      return;
+    }
 
     Embrace.getInstance().logInfo(EventTag + " RejectedCall::CallRecordRetrievedFromDB");
 
