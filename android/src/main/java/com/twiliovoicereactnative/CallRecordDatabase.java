@@ -127,7 +127,13 @@ class CallRecordDatabase  {
 
   public CallRecord get(final CallRecord record) {
     try {
-      return callRecordList.get(callRecordList.indexOf(record));
+      int index = callRecordList.indexOf(record);
+
+      if (index == -1) {
+        return null;
+      }
+
+      return callRecordList.get(index);
     } catch (IndexOutOfBoundsException e) {
       return null;
     }

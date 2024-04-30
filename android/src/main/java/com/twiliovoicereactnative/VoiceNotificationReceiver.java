@@ -70,40 +70,52 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     String action = Objects.requireNonNull(intent.getAction());
     logger.log("action: " + action);
 
+    UUID uuid = null;
+
+    try {
+      uuid = Objects.requireNonNull(getMessageUUID(intent));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (uuid == null) {
+      Embrace.getInstance().logWarning(EventTag + " UUID_NOT_DEFINED");
+      return;
+    }
+
     Embrace.getInstance().logInfo(EventTag + " Action::" + action);
 
     switch (action) {
       case ACTION_INCOMING_CALL:
-        handleIncomingCall(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleIncomingCall(context, uuid);
         break;
       case ACTION_ACCEPT_CALL:
         isCallInProgress = true;
-        handleAccept(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleAccept(context, uuid);
         break;
       case ACTION_REJECT_CALL:
-        handleReject(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleReject(context, uuid);
         break;
       case ACTION_CANCEL_CALL:
-        handleCancelCall(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleCancelCall(context, uuid);
         break;
       case ACTION_CALL_DISCONNECT:
         isCallInProgress = false;
-        handleDisconnect(Objects.requireNonNull(getMessageUUID(intent)));
+        handleDisconnect(uuid);
         VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_RAISE_OUTGOING_CALL_NOTIFICATION:
         isCallInProgress = true;
-        handleRaiseOutgoingCallNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleRaiseOutgoingCallNotification(context, uuid);
         break;
       case ACTION_CANCEL_NOTIFICATION:
         isCallInProgress = false;
-        handleCancelNotification(context, Objects.requireNonNull(getMessageUUID(intent)));
+        handleCancelNotification(context, uuid);
         VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
         break;
       case ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION:
         handleForegroundAndDeprioritizeIncomingCallNotification(
-          context,
-          Objects.requireNonNull(getMessageUUID(intent)));
+          context, uuid);
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
         handleMissedCallNotificationClick(context, intent);
@@ -189,8 +201,19 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private void handleAccept(Context context, final UUID uuid) {
     logger.debug("Accept_Call Message Received");
     // find call record
-    final CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " AcceptCall::CallRecordNotFoundInDB");
+      return;
+    }
 
     Embrace.getInstance().logInfo(EventTag + " AcceptCall::CallRecordRetrievedFromDB");
 
@@ -236,8 +259,19 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   private void handleReject(Context context, final UUID uuid) {
     logger.debug("Reject_Call Message Received");
     // find call record
-    final CallRecord callRecord =
-      Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " RejectedCall::CallRecordNotFoundInDB");
+      return;
+    }
 
     Embrace.getInstance().logInfo(EventTag + " RejectedCall::CallRecordRetrievedFromDB");
 
@@ -271,16 +305,23 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
   }
 
   private void handleCancelCall(Context context, final UUID uuid) {
-    CallRecord callRecord;
-
+    logger.debug("Cancel_Call Message Received");
+    CallRecord callRecord = null;
     try {
-      logger.debug("Cancel_Call Message Received");
-      // find call record
-      callRecord =
-              Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
 
       Embrace.getInstance().logInfo(EventTag + " CancelledCall::CallRecordRetrievedFromDB");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
+    if (callRecord == null) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::CallRecordNotFoundInDB");
+      return;
+    }
+
+    try {
       // take down notification
       cancelNotification(context, callRecord.getNotificationId());
 
@@ -394,7 +435,18 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     logger.debug("Foreground & Deprioritize Incoming Call Notification Message Received");
 
     // cancel existing notification & put up in call
-    final CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = null;
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      Embrace.getInstance().logInfo(EventTag + " handleForegroundAndDeprioritizeIncomingCallNotification::CallRecordNotFoundInDB");
+      return;
+    }
+    
     Notification notification = NotificationUtility.createIncomingCallNotification(
       context.getApplicationContext(),
       callRecord,

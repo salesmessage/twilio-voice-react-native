@@ -34,6 +34,7 @@ import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.*;
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -102,8 +103,20 @@ class CallListenerProxy implements Call.Listener {
   public void onConnected(@NonNull Call call) {
     debug("onConnected");
 
-    // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = null;
+
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+
+      Embrace.getInstance().logWarning(EventTag + " onConnected::CallRecordNotFoundInDB");
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      return;
+    }
+
     callRecord.setCall(call);
     callRecord.setTimestamp(new Date());
     getMediaPlayerManager().stop();
