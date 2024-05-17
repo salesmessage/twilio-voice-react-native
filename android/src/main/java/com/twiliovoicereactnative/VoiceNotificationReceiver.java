@@ -190,10 +190,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
       Embrace.getInstance().logInfo(EventTag + " IncomingCall::JSEventSent");
     } catch (Exception e) {
-      HashMap props = new HashMap<String, Integer>();
-      props.put("errMessage", e.getMessage());
-
-      Embrace.getInstance().logError(EventTag + " IncomingCall::Error::", props);
+      Embrace.getInstance().logInfo(EventTag + " IncomingCall::Error::" + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -286,8 +283,12 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 //  VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
     // reject call
-    callRecord.getCallInvite().reject(context.getApplicationContext());
-    callRecord.setCallInviteUsedState();
+    try {
+      callRecord.getCallInvite().reject(context.getApplicationContext());
+      callRecord.setCallInviteUsedState();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     // handle if event spawned from JS
     if (null != callRecord.getCallRejectedPromise()) {
@@ -341,10 +342,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
       Embrace.getInstance().logInfo(EventTag + " CancelledCall::JSEventSent");
 
     } catch (Exception e) {
-      HashMap props = new HashMap<String, Integer>();
-      props.put("errMessage", e.getMessage());
-
-      Embrace.getInstance().logError(EventTag + " CancelledCall::Error", props);
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::Error::" + e.getMessage());
       e.printStackTrace();
       return;
     }
@@ -379,10 +377,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
       Embrace.getInstance().logInfo(EventTag + " CancelledCall::MissedCallNotificationCreated");
     } catch (Exception e) {
-      HashMap props = new HashMap<String, Integer>();
-      props.put("errMessage", e.getMessage());
-
-      Embrace.getInstance().logError(EventTag + " CancelledCall::MissedCallNotificationError", props);
+      Embrace.getInstance().logInfo(EventTag + " CancelledCall::MissedCallNotificationError::" + e.getMessage());
       e.printStackTrace();
     }
   }

@@ -172,7 +172,25 @@ class CallListenerProxy implements Call.Listener {
     debug("onDisconnected");
 
     // find & update call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = null;
+
+    try {
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      getMediaPlayerManager().stop();
+      getAudioSwitchManager().getAudioSwitch().deactivate();
+
+      if (proximityManager != null) {
+        proximityManager.stopProximitySensor();
+      }
+
+      Embrace.getInstance().logInfo(EventTag + " onDisconnected::CallRecordNotFoundInDB");
+      return;
+    }
 
     Embrace.getInstance().logInfo(EventTag + " onDisconnected::CallRecordRetrievedFromDB");
 

@@ -161,7 +161,10 @@ class NotificationUtility {
     ).build();
 
     Bundle extras = new Bundle();
-    extras.putString("CALL_SID", callInvite.getCallSid());
+
+    if (callInvite != null) {
+      extras.putString("CALL_SID", callInvite.getCallSid());
+    }
 
     return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
 //      .setSmallIcon(smallIconResId)
