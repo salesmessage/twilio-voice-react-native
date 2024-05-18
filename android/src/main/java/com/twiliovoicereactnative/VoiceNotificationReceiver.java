@@ -226,6 +226,7 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
+    VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
 
     // accept call
     AcceptOptions acceptOptions = new AcceptOptions.Builder()
