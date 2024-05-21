@@ -52,7 +52,7 @@ class CallListenerProxy implements Call.Listener {
     this.uuid = uuid;
     this.context = context;
 
-    Embrace.getInstance().logWarning(EventTag + " InstanceCreated");
+    Embrace.getInstance().logInfo(EventTag + " InstanceCreated");
   }
 
   @Override
