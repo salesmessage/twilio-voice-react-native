@@ -51,6 +51,8 @@ class CallListenerProxy implements Call.Listener {
   public CallListenerProxy(UUID uuid, Context context) {
     this.uuid = uuid;
     this.context = context;
+
+    Embrace.getInstance().logInfo(EventTag + " InstanceCreated");
   }
 
   @Override
@@ -102,6 +104,8 @@ class CallListenerProxy implements Call.Listener {
   @Override
   public void onConnected(@NonNull Call call) {
     debug("onConnected");
+
+    Embrace.getInstance().logInfo(EventTag + " onConnected::Start");
 
     CallRecord callRecord = null;
 

@@ -54,8 +54,11 @@ import android.util.Pair;
 
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
+import io.embrace.android.embracesdk.Embrace;
+
 @ReactModule(name = TwilioVoiceReactNativeModule.TAG)
 public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
+  private static final String EventTag = "[Android TwilioVoiceRNModule]";
   private ProximityManager proximityManager;
   private EventManager eventManager;
 
@@ -184,6 +187,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     logger.debug("Calling voice_connect_android");
     HashMap<String, String> parsedTwimlParams = new HashMap<>();
 
+    Embrace.getInstance().logWarning(EventTag + " Connect::Start");
+
     ReadableMapKeySetIterator iterator = twimlParams.keySetIterator();
     while (iterator.hasNextKey()) {
       String key = iterator.nextKey();
@@ -220,6 +225,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
         new CallListenerProxy(uuid, reactContext))
     );
     getCallRecordDatabase().add(callRecord);
+
+    Embrace.getInstance().logWarning(EventTag + " Connect::CallRecordCreated");
 
     new MediaPlayerManager(getReactApplicationContext()).enableBluetooth();
 
