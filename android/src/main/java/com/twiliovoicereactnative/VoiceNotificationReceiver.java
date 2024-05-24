@@ -453,12 +453,16 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
     // stop active sound (if any)
 //    VoiceApplicationProxy.getMediaPlayerManager().stop();
 
-    // notify JS layer
-    sendJSEvent(
-      constructJSMap(
-        new Pair<>(VoiceEventType, VoiceEventCallInviteNotificationTapped),
-        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))
-      ));
+    try {
+      // notify JS layer
+      sendJSEvent(
+        constructJSMap(
+          new Pair<>(VoiceEventType, VoiceEventCallInviteNotificationTapped),
+          new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))
+        ));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void handleMissedCallNotificationClick(Context context, Intent intent) {
