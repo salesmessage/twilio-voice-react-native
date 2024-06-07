@@ -104,6 +104,8 @@ class ReactNativeArgumentsSerializer {
         new Pair<>(CallInviteInfoTo, callInvite.getTo()),
         new Pair<>(CallInviteInfoCustomParameters, serializeCallInviteCustomParameters(callInvite)));
     }
+
+    return null;
   }
 
   /**
