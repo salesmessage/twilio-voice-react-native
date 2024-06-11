@@ -90,10 +90,6 @@ public class VoiceActivityProxy {
       copiedIntent.setFlags(0);
       context.getApplicationContext().sendBroadcast(copiedIntent);
     }
-
-    if (action.equals(Constants.ACTION_PUSH_APP_TO_FOREGROUND)) {
-//      VoiceNotificationReceiver.cancelAllNotifications(context);
-    }
   }
 
   static {
