@@ -226,32 +226,37 @@ public class VoiceNotificationReceiver extends BroadcastReceiver {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
 
-    // accept call
-    AcceptOptions acceptOptions = new AcceptOptions.Builder()
-      .enableDscp(true)
-      .callMessageListener(new CallMessageListenerProxy())
-      .build();
-    callRecord.setCall(callRecord.getCallInvite().accept(
-      context.getApplicationContext(),
-      acceptOptions,
-      new CallListenerProxy(uuid, context)));
-    callRecord.setCallInviteUsedState();
+    try {
+      // accept call
+      AcceptOptions acceptOptions = new AcceptOptions.Builder()
+              .enableDscp(true)
+              .callMessageListener(new CallMessageListenerProxy())
+              .build();
+      callRecord.setCall(callRecord.getCallInvite().accept(
+              context.getApplicationContext(),
+              acceptOptions,
+              new CallListenerProxy(uuid, context)));
+      callRecord.setCallInviteUsedState();
 
-    // handle if event spawned from JS
-    if (null != callRecord.getCallAcceptedPromise()) {
-      callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
+      // handle if event spawned from JS
+      if (null != callRecord.getCallAcceptedPromise()) {
+        callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
+      }
+
+      VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
+
+      Embrace.getInstance().logInfo(EventTag + " AcceptCall::SendingJSEvent");
+      // notify JS layer
+      sendJSEvent(
+              constructJSMap(
+                      new Pair<>(VoiceEventType, VoiceEventCallInviteAccepted),
+                      new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+
+      Embrace.getInstance().logInfo(EventTag + " AcceptCall::JSEventSent");
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-    Embrace.getInstance().logInfo(EventTag + " AcceptCall::SendingJSEvent");
-    // notify JS layer
-    sendJSEvent(
-      constructJSMap(
-        new Pair<>(VoiceEventType, VoiceEventCallInviteAccepted),
-        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
-
-    Embrace.getInstance().logInfo(EventTag + " AcceptCall::JSEventSent");
   }
 
   private void handleReject(Context context, final UUID uuid) {
