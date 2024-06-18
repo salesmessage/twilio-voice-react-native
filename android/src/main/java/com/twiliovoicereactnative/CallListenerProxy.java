@@ -225,16 +225,20 @@ class CallListenerProxy implements Call.Listener {
                                            @NonNull Set<Call.CallQualityWarning> previousWarnings) {
     debug("onCallQualityWarningsChanged");
 
-    // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    try {
+      // find call record
+      CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
 
-    // notify JS layer
-    sendJSEvent(
-      constructJSMap(
-        new Pair<>(VoiceEventType, CallEventQualityWarningsChanged),
-        new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord)),
-        new Pair<>(CallEventCurrentWarnings, serializeCallQualityWarnings(currentWarnings)),
-        new Pair<>(CallEventPreviousWarnings, serializeCallQualityWarnings(previousWarnings))));
+      // notify JS layer
+      sendJSEvent(
+        constructJSMap(
+          new Pair<>(VoiceEventType, CallEventQualityWarningsChanged),
+          new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord)),
+          new Pair<>(CallEventCurrentWarnings, serializeCallQualityWarnings(currentWarnings)),
+          new Pair<>(CallEventPreviousWarnings, serializeCallQualityWarnings(previousWarnings))));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void sendJSEvent(@NonNull WritableMap event) {
