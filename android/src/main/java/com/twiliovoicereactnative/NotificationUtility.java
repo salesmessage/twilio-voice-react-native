@@ -1,5 +1,6 @@
 package com.twiliovoicereactnative;
 
+import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Objects;
@@ -13,8 +14,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationChannelGroupCompat;
 import androidx.core.app.NotificationCompat;
@@ -87,6 +94,8 @@ class NotificationUtility {
       .setName(notificationResource.getContent(callRecord.getCallInvite()))
       .build();
 
+    CallInvite callInvite = callRecord.getCallInvite();
+
     Intent foregroundIntent = constructMessage(
       context,
       Constants.ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION,
@@ -108,16 +117,43 @@ class NotificationUtility {
       callRecord.getUuid());
     PendingIntent piAcceptIntent = constructPendingIntentForActivity(context, acceptIntent);
 
-    return constructNotificationBuilder(context, channelImportance)
-      .setSmallIcon(notificationResource.getSmallIconId())
-      .setCategory(Notification.CATEGORY_CALL)
-      .setAutoCancel(true)
-      .setContentIntent(piForegroundIntent)
-      .setFullScreenIntent(piForegroundIntent, true)
-      .addPerson(incomingCaller)
-      .setStyle(NotificationCompat.CallStyle.forIncomingCall(
-        incomingCaller, piRejectIntent, piAcceptIntent))
-      .build();
+
+    NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_call,
+            getActionText(context, R.string.answer, R.color.colorGreen),
+            piAcceptIntent
+    ).build();
+
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.decline, R.color.colorRed),
+            piRejectIntent
+    ).build();
+
+    NotificationCompat.Builder builder = constructNotificationBuilder(context, channelImportance);
+    builder
+            .setSmallIcon(R.drawable.ic_call_white_24dp)
+            .setContentTitle("Incoming call")
+            .setContentText(getContentCallBanner(callInvite))
+            .setAutoCancel(true)
+            .addAction(rejectAction)
+            .addAction(answerAction)
+            .setFullScreenIntent(piForegroundIntent, true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(Notification.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(piForegroundIntent);
+    return builder.build();
+
+//      .setSmallIcon(R.drawable.ic_call_white_24dp)
+//      .setCategory(Notification.CATEGORY_CALL)
+//      .setAutoCancel(true)
+//      .setContentIntent(piForegroundIntent)
+//      .setFullScreenIntent(piForegroundIntent, true)
+//      .addPerson(incomingCaller)
+//      .setStyle(NotificationCompat.CallStyle.forIncomingCall(
+//        incomingCaller, piRejectIntent, piAcceptIntent))
+//      .build();
   }
 
   public static Notification createCallAnsweredNotificationWithLowImportance(@NonNull Context context,
@@ -291,4 +327,45 @@ class NotificationUtility {
       .appendPath(String.valueOf(id))
     ).build();
   }
+
+  //
+
+  private static Spannable getActionText(Context context, @StringRes int stringRes, @ColorRes int colorRes) {
+    Spannable spannable = new SpannableString(context.getText(stringRes));
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+      spannable.setSpan(
+              new ForegroundColorSpan(context.getColor(colorRes)),
+              0,
+              spannable.length(),
+              0
+      );
+    }
+    return spannable;
+  }
+
+  private static String getContentCallBanner(CallInvite callInvite) {
+    return getDisplayName(callInvite) + " is calling";
+  }
+
+  private static String getDisplayName(CallInvite callInvite) {
+    try {
+      String title = callInvite.getFrom();
+      Map<String, String> customParameters = callInvite.getCustomParameters();
+      // If "displayName" is passed as a custom parameter in the TwiML application,
+      // it will be used as the caller name.
+      if (customParameters.get(Constants.DISPLAY_NAME) != null) {
+        title = URLDecoder.decode(customParameters.get(Constants.DISPLAY_NAME).replaceAll("\\+", "%20"));
+      }
+
+      if (customParameters.get("CallerName") != null) {
+        title = URLDecoder.decode(customParameters.get("CallerName").replaceAll("\\+", "%20"));
+      }
+
+      return title;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Unknown caller";
+    }
+  }
+
 }
