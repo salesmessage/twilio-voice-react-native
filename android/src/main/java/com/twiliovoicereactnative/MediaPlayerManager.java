@@ -2,7 +2,12 @@ package com.twiliovoicereactnative;
 
 import android.content.Context;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.media.SoundPool;
+import android.net.Uri;
+import android.os.Vibrator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,8 +22,17 @@ class MediaPlayerManager {
   private final SoundPool soundPool;
   private final Map<SoundTable, Integer> soundMap;
   private int activeStream;
+  private AudioManager audioManager;
+  private Vibrator vibe = null;
+  private Ringtone ringtone = null;
+  private boolean playing = false;
 
   MediaPlayerManager(Context context) {
+    Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+    audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+    vibe = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+    ringtone = RingtoneManager.getRingtone(context, ringtoneSound);
+
     soundPool = (new SoundPool.Builder())
       .setMaxStreams(2)
       .setAudioAttributes(
@@ -35,19 +49,46 @@ class MediaPlayerManager {
     soundMap.put(SoundTable.RINGTONE, soundPool.load(context, R.raw.ringtone, 1));
   }
 
-  public void play(final SoundTable sound) {
-    activeStream = soundPool.play(
-      soundMap.get(sound),
-      1.f,
-      1.f,
-      1,
-      (SoundTable.DISCONNECT== sound) ? 0 : -1,
-      1.f);
+  public boolean isRingerModeVibrate() {
+    return audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE;
+  }
+
+
+  public void play() {
+    try {
+      if (isRingerModeVibrate()) {
+        long[] pattern = {0, 300, 1000};
+        vibe.vibrate(pattern, 0);
+        return;
+      }
+    } catch (Exception e) {
+
+      e.printStackTrace();
+      return;
+    }
+
+    try {
+      if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL && !playing && ringtone != null) {
+        ringtone.play();
+        playing = true;
+        audioManager.setSpeakerphoneOn(true);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void stop() {
-    soundPool.stop(activeStream);
-    activeStream = 0;
+    try {
+      if (ringtone.isPlaying() && ringtone != null) {
+        ringtone.stop();
+        playing = false;
+      }
+
+      vibe.cancel();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Override

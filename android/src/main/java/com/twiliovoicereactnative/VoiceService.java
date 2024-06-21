@@ -167,7 +167,7 @@ public class VoiceService extends Service {
 
     // play ringer sound
     VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
-    VoiceApplicationProxy.getMediaPlayerManager().play(MediaPlayerManager.SoundTable.INCOMING);
+    VoiceApplicationProxy.getMediaPlayerManager().play();
 
     // trigger JS layer
     sendJSEvent(
