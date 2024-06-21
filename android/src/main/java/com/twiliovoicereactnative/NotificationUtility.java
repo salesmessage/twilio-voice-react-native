@@ -181,16 +181,34 @@ class NotificationUtility {
       callRecord.getUuid());
     PendingIntent piEndCallIntent = constructPendingIntentForService(context, endCallIntent);
 
+    NotificationCompat.Action rejectAction = new NotificationCompat.Action.Builder(
+            android.R.drawable.ic_menu_delete,
+            getActionText(context, R.string.decline, R.color.colorRed),
+            piEndCallIntent
+    ).build();
+
     return constructNotificationBuilder(context, Constants.VOICE_CHANNEL_LOW_IMPORTANCE)
-      .setSmallIcon(notificationResource.getSmallIconId())
+      .setSmallIcon(R.drawable.ic_call_white_24dp)
       .setCategory(Notification.CATEGORY_CALL)
+      .setContentTitle("Call in progress")
+      .setContentText("Show call details in the app")
       .setAutoCancel(false)
-      .setContentIntent(piForegroundIntent)
+      .addAction(rejectAction)
       .setFullScreenIntent(piForegroundIntent, true)
-      .setOngoing(true)
-      .addPerson(activeCaller)
-      .setStyle(NotificationCompat.CallStyle.forOngoingCall(activeCaller, piEndCallIntent))
+      .setPriority(NotificationCompat.PRIORITY_LOW)
+      .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+      .setContentIntent(piForegroundIntent)
       .build();
+
+//      .setSmallIcon(notificationResource.getSmallIconId())
+//      .setCategory(Notification.CATEGORY_CALL)
+//      .setAutoCancel(false)
+//      .setContentIntent(piForegroundIntent)
+//      .setFullScreenIntent(piForegroundIntent, true)
+//      .setOngoing(true)
+//      .addPerson(activeCaller)
+//      .setStyle(NotificationCompat.CallStyle.forOngoingCall(activeCaller, piEndCallIntent))
+//      .build();
   }
 
   public static Notification createOutgoingCallNotificationWithLowImportance(@NonNull Context context,
