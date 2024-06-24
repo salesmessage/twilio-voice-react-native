@@ -26,12 +26,14 @@ class MediaPlayerManager {
   private Vibrator vibe = null;
   private Ringtone ringtone = null;
   private boolean playing = false;
+  private static final SDKLog logger = new SDKLog(MediaPlayerManager.class);
 
   MediaPlayerManager(Context context) {
     Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
     audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     vibe = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     ringtone = RingtoneManager.getRingtone(context, ringtoneSound);
+
 
     soundPool = (new SoundPool.Builder())
       .setMaxStreams(2)
@@ -69,6 +71,7 @@ class MediaPlayerManager {
 
     try {
       if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL && !playing && ringtone != null) {
+        logger.debug("play started...");
         ringtone.play();
         playing = true;
         audioManager.setSpeakerphoneOn(true);
@@ -79,6 +82,7 @@ class MediaPlayerManager {
   }
 
   public void stop() {
+    logger.debug("play stopped");
     try {
       if (ringtone.isPlaying() && ringtone != null) {
         ringtone.stop();

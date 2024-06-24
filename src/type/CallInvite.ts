@@ -26,6 +26,11 @@ export interface NativeCallInviteNotificationTappedEvent
   type: Constants.CallInviteEventTypeValueNotificationTapped;
 }
 
+export interface NativeMissedCallNotificationTappedEvent {
+  type: Constants.VoiceEventMissedCallNotificationTapped;
+  callInvite: NativeCallInviteInfo;
+}
+
 export interface NativeCallInviteRejectedEvent
   extends BaseNativeCallInviteEvent {
   type: Constants.CallInviteEventTypeValueRejected;
@@ -53,6 +58,7 @@ export interface NativeCallInviteMessageReceivedEvent
 
 export type NativeCallInviteEvent =
   | NativeCallInviteNotificationTappedEvent
+  | NativeMissedCallNotificationTappedEvent
   | NativeCallInviteAcceptedEvent
   | NativeCallInviteRejectedEvent
   | NativeCallInviteCancelledEvent
