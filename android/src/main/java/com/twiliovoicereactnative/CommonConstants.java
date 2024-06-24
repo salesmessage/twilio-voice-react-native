@@ -15,6 +15,7 @@ public class CommonConstants {
   // Common
   public static final String VoiceEventError = "voiceEventError";
   public static final String VoiceEventType = "type";
+  public static final String VoiceEventMissedCallNotificationTapped = "voiceEventMissedCallNotificationTapped";
 
   // Error
   public static final String VoiceErrorKeyError = "error";
