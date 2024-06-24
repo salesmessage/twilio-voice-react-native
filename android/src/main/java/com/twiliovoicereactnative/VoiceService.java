@@ -182,7 +182,7 @@ public class VoiceService extends Service {
     createOrReplaceNotification(callRecord.getNotificationId(), notification);
 
     // play ringer sound
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
     VoiceApplicationProxy.getMediaPlayerManager().play();
 
     // trigger JS layer
@@ -203,6 +203,7 @@ public class VoiceService extends Service {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
+    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
     // accept call
     AcceptOptions acceptOptions = new AcceptOptions.Builder()
