@@ -272,6 +272,7 @@ export declare class Voice extends EventEmitter {
      *  - Resolves with a string representing the version of the native SDK.
      */
     getVersion(): Promise<string>;
+    canUseFullScreenIntent(): Promise<boolean>;
     /**
      * Get the Device token from the native layer.
      * @returns a Promise that resolves with a string representing the Device
