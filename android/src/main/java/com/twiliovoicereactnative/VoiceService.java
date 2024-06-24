@@ -283,7 +283,7 @@ public class VoiceService extends Service {
     createOrReplaceNotification(callRecord.getNotificationId(), notification);
 
     // stop active sound (if any)
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
+//    VoiceApplicationProxy.getMediaPlayerManager().stop();
 
     // notify JS layer
     sendJSEvent(
