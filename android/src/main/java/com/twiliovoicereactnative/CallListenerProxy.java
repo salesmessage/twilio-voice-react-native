@@ -42,6 +42,7 @@ class CallListenerProxy implements Call.Listener {
   private static final SDKLog logger = new SDKLog(CallListenerProxy.class);
   private final UUID uuid;
   private final Context context;
+  public static ProximityManager proximityManager = null;
 
   public CallListenerProxy(UUID uuid, Context context) {
     this.uuid = uuid;
@@ -61,6 +62,10 @@ class CallListenerProxy implements Call.Listener {
 
     // take down notification
     getVoiceServiceApi().cancelNotification(callRecord);
+
+    if (proximityManager != null) {
+      proximityManager.stopProximitySensor();
+    }
 
     // serialize and notify JS
     sendJSEvent(
@@ -100,6 +105,10 @@ class CallListenerProxy implements Call.Listener {
     callRecord.setCall(call);
     callRecord.setTimestamp(new Date());
     getMediaPlayerManager().stop();
+
+    if (proximityManager != null) {
+      proximityManager.startProximitySensor();
+    }
 
     // notify JS layer
     sendJSEvent(
@@ -149,6 +158,10 @@ class CallListenerProxy implements Call.Listener {
 //    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
     getAudioSwitchManager().getAudioSwitch().deactivate();
     getVoiceServiceApi().cancelNotification(callRecord);
+
+    if (proximityManager != null) {
+      proximityManager.stopProximitySensor();
+    }
 
     // notify JS layer
     sendJSEvent(
