@@ -1,13 +1,21 @@
 package com.twiliovoicereactnative;
 
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.media.SoundPool;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Vibrator;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +35,10 @@ class MediaPlayerManager {
   private Ringtone ringtone = null;
   private boolean playing = false;
   private static final SDKLog logger = new SDKLog(MediaPlayerManager.class);
+  private static Context _context = null;
 
   MediaPlayerManager(Context context) {
+    _context = context;
     Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
     audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     vibe = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
@@ -75,6 +85,8 @@ class MediaPlayerManager {
         ringtone.play();
         playing = true;
         audioManager.setSpeakerphoneOn(true);
+
+        enableBluetooth();
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -92,6 +104,32 @@ class MediaPlayerManager {
       vibe.cancel();
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.S)
+  private boolean isBluetoothHeadsetConnected() {
+    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    boolean hasBluetoothPermission = ActivityCompat.checkSelfPermission(_context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+
+    try {
+      return bluetoothAdapter != null && bluetoothAdapter.isEnabled()
+              && bluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothAdapter.STATE_CONNECTED;
+    } catch (NullPointerException ex) {
+      ex.printStackTrace();
+    }
+
+    return false;
+  }
+
+  public void enableBluetooth() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      if (isBluetoothHeadsetConnected()) {
+        logger.debug("Switching to bluetooth device");
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        audioManager.startBluetoothSco();
+        audioManager.setBluetoothScoOn(true);
+      }
     }
   }
 

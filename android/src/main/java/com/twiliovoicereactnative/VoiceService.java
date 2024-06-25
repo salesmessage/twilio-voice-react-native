@@ -218,6 +218,8 @@ public class VoiceService extends Service {
       callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
     }
 
+    VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
+
     // notify JS layer
     sendJSEvent(
       ScopeCallInvite,
