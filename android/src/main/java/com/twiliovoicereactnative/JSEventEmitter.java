@@ -24,7 +24,7 @@ class JSEventEmitter {
   }
   public void sendEvent(String eventName, @Nullable WritableMap params) {
     logger.debug("sendEvent " + eventName + " params " + params);
-    if ((null != context.get()) &&
+    if (context != null && (null != context.get()) &&
         context.get().hasActiveReactInstance()) {
       context.get()
         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)

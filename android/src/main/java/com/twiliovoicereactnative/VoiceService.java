@@ -77,7 +77,6 @@ public class VoiceService extends Service {
       VoiceService.this.disconnect(callRecord);
     }
     public void incomingCall(final CallRecordDatabase.CallRecord callRecord) {
-      logger.debug("------> incomingCall");
       VoiceService.this.incomingCall(callRecord);
     }
     public void acceptCall(final CallRecordDatabase.CallRecord callRecord) {
@@ -87,7 +86,6 @@ public class VoiceService extends Service {
       VoiceService.this.rejectCall(callRecord);
     }
     public void cancelCall(final CallRecordDatabase.CallRecord callRecord) {
-      logger.debug("------> cancelCall");
       VoiceService.this.cancelCall(callRecord);
     }
     public void raiseOutgoingCallNotification(final CallRecordDatabase.CallRecord callRecord) {
@@ -107,8 +105,6 @@ public class VoiceService extends Service {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    logger.debug("----------> ACTION: " + Objects.requireNonNull(intent.getAction()));
-
     switch (Objects.requireNonNull(intent.getAction())) {
       case ACTION_INCOMING_CALL:
         incomingCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
@@ -338,8 +334,6 @@ public class VoiceService extends Service {
         new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid())));
   }
   private void cancelNotification(final CallRecordDatabase.CallRecord callRecord) {
-    logger.debug("------> cancelNotification()");
-
     logger.debug("cancelNotification");
     // only take down notification & stop any active sounds if one is active
     if (null != callRecord) {
@@ -349,7 +343,6 @@ public class VoiceService extends Service {
   }
   private void createOrReplaceNotification(final int notificationId,
                                            final Notification notification) {
-    logger.debug("------> createOrReplaceNotification(): " + notificationId);
     if (ActivityCompat.checkSelfPermission(VoiceService.this, Manifest.permission.POST_NOTIFICATIONS)
       == PackageManager.PERMISSION_GRANTED) {
       foregroundNotification(notificationId, notification);
@@ -370,7 +363,6 @@ public class VoiceService extends Service {
     }
   }
   private void removeNotification() {
-    logger.debug("------> removeNotification()");
     ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
   }
   private void foregroundNotification(int id, Notification notification) {
