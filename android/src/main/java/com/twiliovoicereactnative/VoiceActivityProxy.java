@@ -89,10 +89,11 @@ public class VoiceActivityProxy {
     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
       permissionList = new String[] {
         Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.BLUETOOTH_CONNECT,
         Manifest.permission.POST_NOTIFICATIONS };
     } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
       permissionList = new String[] {
-        Manifest.permission.RECORD_AUDIO };
+        Manifest.permission.RECORD_AUDIO, Manifest.permission.BLUETOOTH_CONNECT };
     } else {
       permissionList = new String[] { Manifest.permission.RECORD_AUDIO };
     }
