@@ -1,3 +1,5 @@
+apply plugin: 'embrace-swazzler'
+
 buildscript {
   ext.versions = [
     'java'               : JavaVersion.VERSION_11,
@@ -74,6 +76,7 @@ dependencies {
   implementation "com.google.firebase:firebase-messaging:${versions.firebaseMessaging}"
   implementation "com.twilio:audioswitch:${versions.audioSwitch}"
   implementation 'com.google.android.material:material:1.1.0'
+  implementation 'io.embrace:embrace-android-sdk:6.8.2'
 
   constraints {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {

@@ -33,6 +33,8 @@ import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.*;
 
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 
+import io.embrace.android.embracesdk.Embrace;
+
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -43,10 +45,13 @@ class CallListenerProxy implements Call.Listener {
   private final UUID uuid;
   private final Context context;
   public static ProximityManager proximityManager = null;
+  private static final String EventTag = "[Android CallListenerProxy]";
 
   public CallListenerProxy(UUID uuid, Context context) {
     this.uuid = uuid;
     this.context = context;
+
+    Embrace.getInstance().logInfo(EventTag + " InstanceCreated");
   }
 
   @Override
@@ -100,8 +105,22 @@ class CallListenerProxy implements Call.Listener {
   public void onConnected(@NonNull Call call) {
     debug("onConnected");
 
-    // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    Embrace.getInstance().logInfo(EventTag + " onConnected::Start");
+
+    CallRecord callRecord = null;
+
+    try {
+      // find call record
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    } catch (Exception e) {
+      Embrace.getInstance().logWarning(EventTag + " onConnected::CallRecordNotFoundInDB");
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      return;
+    }
+
     callRecord.setCall(call);
     callRecord.setTimestamp(new Date());
     getMediaPlayerManager().stop();
@@ -110,11 +129,15 @@ class CallListenerProxy implements Call.Listener {
       proximityManager.startProximitySensor();
     }
 
+    Embrace.getInstance().logInfo(EventTag + " onConnected::SendingJSEvent");
+
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, CallEventConnected),
         new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord))));
+
+    Embrace.getInstance().logInfo(EventTag + " onConnected::JSEventSent");
   }
 
   @Override
@@ -150,12 +173,31 @@ class CallListenerProxy implements Call.Listener {
   public void onDisconnected(@NonNull Call call, @Nullable CallException callException) {
     debug("onDisconnected");
 
-    // find & remove call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+    CallRecord callRecord = null;
+
+    try {
+      // find & remove call record
+      callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
+    } catch (Exception e) {
+      Embrace.getInstance().logInfo(EventTag + " onDisconnected::CallRecordNotFoundInDB");
+      e.printStackTrace();
+    }
+
+    if (callRecord == null) {
+      getMediaPlayerManager().stop();
+      getAudioSwitchManager().getAudioSwitch().deactivate();
+
+      if (proximityManager != null) {
+        proximityManager.stopProximitySensor();
+      }
+
+      return;
+    }
+
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::CallRecordRetrievedFromDB");
 
     // stop audio & cancel notification
     getMediaPlayerManager().stop();
-//    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
     getAudioSwitchManager().getAudioSwitch().deactivate();
     getVoiceServiceApi().cancelNotification(callRecord);
 
@@ -163,12 +205,16 @@ class CallListenerProxy implements Call.Listener {
       proximityManager.stopProximitySensor();
     }
 
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::SendingJSEvent");
+
     // notify JS layer
     sendJSEvent(
       constructJSMap(
         new Pair<>(VoiceEventType, CallEventDisconnected),
         new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord)),
         new Pair<>(VoiceErrorKeyError, serializeVoiceException(callException))));
+
+    Embrace.getInstance().logInfo(EventTag + " onDisconnected::JSEventSent");
   }
 
   @Override
