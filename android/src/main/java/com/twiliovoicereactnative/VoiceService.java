@@ -107,7 +107,16 @@ public class VoiceService extends Service {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    switch (Objects.requireNonNull(intent.getAction())) {
+    String action = "";
+
+    try {
+      action = Objects.requireNonNull(intent.getAction());
+    } catch (Exception e) {
+      e.printStackTrace();
+      return START_NOT_STICKY;
+    }
+
+    switch (action) {
       case ACTION_INCOMING_CALL:
         incomingCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
         break;
