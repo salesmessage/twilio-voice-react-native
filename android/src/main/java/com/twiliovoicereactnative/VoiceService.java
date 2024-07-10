@@ -109,39 +109,46 @@ public class VoiceService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
     String action = "";
 
+    CallRecordDatabase.CallRecord callRecord = null;
+
     try {
       action = Objects.requireNonNull(intent.getAction());
+
+      callRecord = getCallRecord(Objects.requireNonNull(getMessageUUID(intent)));
     } catch (Exception e) {
       e.printStackTrace();
       return START_NOT_STICKY;
     }
 
+    if (callRecord == null) {
+      return START_NOT_STICKY;
+    }
+
     switch (action) {
       case ACTION_INCOMING_CALL:
-        incomingCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        incomingCall(callRecord);
         break;
       case ACTION_ACCEPT_CALL:
-        acceptCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        acceptCall(callRecord);
         break;
       case ACTION_REJECT_CALL:
-        rejectCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        rejectCall(callRecord);
         break;
       case ACTION_CANCEL_CALL:
-        cancelCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        cancelCall(callRecord);
         break;
       case ACTION_CALL_DISCONNECT:
-        disconnect(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        disconnect(callRecord);
         break;
       case ACTION_RAISE_OUTGOING_CALL_NOTIFICATION:
-        raiseOutgoingCallNotification(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        raiseOutgoingCallNotification(callRecord);
         break;
       case ACTION_CANCEL_NOTIFICATION:
         logger.log("ACTION_CANCEL_NOTIFICATION");
-        cancelNotification(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        cancelNotification(callRecord);
         break;
       case ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION:
-        foregroundAndDeprioritizeIncomingCallNotification(
-          getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
+        foregroundAndDeprioritizeIncomingCallNotification(callRecord);
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
         handleMissedCallNotificationClick(intent);
