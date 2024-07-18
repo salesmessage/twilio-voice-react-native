@@ -16,6 +16,7 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -38,6 +39,9 @@ import static com.twiliovoicereactnative.VoiceService.constructMessage;
 
 import com.twiliovoicereactnative.CallRecordDatabase.CallRecord;
 import com.twilio.voice.CancelledCallInvite;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 class NotificationUtility {
   private static final SecureRandom secureRandom = new SecureRandom();
@@ -307,8 +311,31 @@ class NotificationUtility {
             foregroundIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-//    Bundle extras = new Bundle();
-//    extras.putString("CALL_SID", cancelledCallInvite.getCallSid());
+    Bundle extras = new Bundle();
+    //extras.putString("CALL_SID", cancelledCallInvite.getCallSid());
+
+    // Extract "id" from contact_data and inbox_data and put them into a JSON object
+    JSONObject userInfo = new JSONObject();
+    try {
+      JSONObject contactJson = new JSONObject(contact_data);
+      if (contactJson.has("id")) {
+        userInfo.put("contactId", contactJson.getString("id"));
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+
+    try {
+      JSONObject inboxJson = new JSONObject(inbox_data);
+      if (inboxJson.has("id")) {
+        userInfo.put("inboxId", inboxJson.getString("id"));
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+
+    // Put the JSON object into the extras Bundle
+    extras.putString("userInfo", userInfo.toString());
 
     String callerInfo = cancelledCallInvite.getFrom();
     Map<String, String> customParameters = cancelledCallInvite.getCustomParameters();
@@ -320,7 +347,7 @@ class NotificationUtility {
             .setSmallIcon(R.drawable.ic_call_missed_white_24dp)
             .setContentTitle("Missed call")
             .setContentText("Show call details in the app")
-//            .setExtras(extras)
+            .setExtras(extras)
             .setAutoCancel(true)
             .setFullScreenIntent(pendingIntent, true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
