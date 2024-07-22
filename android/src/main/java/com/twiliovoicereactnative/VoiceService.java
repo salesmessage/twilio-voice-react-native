@@ -114,6 +114,11 @@ public class VoiceService extends Service {
     try {
       action = Objects.requireNonNull(intent.getAction());
 
+      if (action == ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL) {
+        handleMissedCallNotificationClick(intent);
+        return START_NOT_STICKY;
+      }
+
       callRecord = getCallRecord(Objects.requireNonNull(getMessageUUID(intent)));
     } catch (Exception e) {
       e.printStackTrace();
@@ -149,9 +154,6 @@ public class VoiceService extends Service {
         break;
       case ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION:
         foregroundAndDeprioritizeIncomingCallNotification(callRecord);
-        break;
-      case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
-        handleMissedCallNotificationClick(intent);
         break;
       case ACTION_PUSH_APP_TO_FOREGROUND:
         logger.warning("VoiceService received foreground request, ignoring");
