@@ -60,6 +60,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   private static final String SDK_VERSION = "com.twilio.voice.env.sdk.version";
   private final ReactApplicationContext reactContext;
   private final AudioSwitchManager audioSwitchManager;
+  private ProximityManager proximityManager;
+  private EventManager eventManager;
 
   public TwilioVoiceReactNativeModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -82,6 +84,10 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
         audioDeviceInfo.putString(VoiceEventType, VoiceEventAudioDevicesUpdated);
         getJSEventEmitter().sendEvent(ScopeVoice, audioDeviceInfo);
       });
+
+    eventManager = new EventManager(reactContext);
+    proximityManager = new ProximityManager(reactContext, eventManager);
+    CallListenerProxy.proximityManager = proximityManager;
   }
 
   /**
@@ -348,6 +354,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void call_disconnect(String uuid, Promise promise) {
     final CallRecord callRecord = validateCallRecord(reactContext, UUID.fromString(uuid), promise);
+
+    proximityManager.stopProximitySensor();
 
     if (null != callRecord) {
       getVoiceServiceApi().disconnect(callRecord);
