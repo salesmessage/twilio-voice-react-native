@@ -477,6 +477,29 @@ public class VoiceService extends Service {
     ));
   }
 
+  private void postponeMissedCallNotificationCallback(WritableMap payload, Integer attempt) {
+    if (attempt > 20) {
+        return;
+    }
+
+    if (isRegisterExecuted) {
+      sendJSEvent(
+        ScopeVoice,
+        constructJSMap(
+          new Pair<>(VoiceEventType, VoiceEventMissedCallNotificationTapped),
+          new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, payload)));
+
+      return;
+    }
+
+    new Timer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        postponeMissedCallNotificationCallback(payload, attempt + 1);
+      }
+    }, 1000L);
+  }
+
   private void handleMissedCallNotificationClick(Intent intent) {
     logger.debug("Missed Call Notification Click Message Received");
 
@@ -487,24 +510,6 @@ public class VoiceService extends Service {
         new Pair<>("inbox", INBOX_DATA),
         new Pair<>("contact", CONTACT_DATA));
 
-    if (isRegisterExecuted) {
-      // notify JS layer
-      sendJSEvent(
-        ScopeVoice,
-        constructJSMap(
-          new Pair<>(VoiceEventType, VoiceEventMissedCallNotificationTapped),
-          new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, payload)));
-    } else {
-      new Timer().schedule(new TimerTask() {
-        @Override
-        public void run() {
-          sendJSEvent(
-            ScopeVoice,
-            constructJSMap(
-              new Pair<>(VoiceEventType, VoiceEventMissedCallNotificationTapped),
-              new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, payload)));
-        }
-      }, 4000L);
-    }
+    postponeMissedCallNotificationCallback(payload, 0);
   }
 }
