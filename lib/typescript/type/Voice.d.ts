@@ -13,4 +13,4 @@ export interface NativeCallInviteIncomingEvent {
     callInvite: NativeCallInviteInfo;
 }
 export declare type NativeVoiceEvent = NativeAudioDevicesUpdatedEvent | NativeCallInviteIncomingEvent | NativeErrorEvent | NativeRegisteredEvent | NativeUnregisteredEvent;
-export declare type NativeVoiceEventType = Constants.VoiceEventAudioDevicesUpdated | Constants.VoiceEventTypeValueIncomingCallInvite | Constants.VoiceEventError | Constants.VoiceEventRegistered | Constants.VoiceEventUnregistered;
+export declare type NativeVoiceEventType = Constants.VoiceEventAudioDevicesUpdated | Constants.VoiceEventMissedCallNotificationTapped  | Constants.VoiceEventTypeValueIncomingCallInvite | Constants.VoiceEventError | Constants.VoiceEventRegistered | Constants.VoiceEventUnregistered;

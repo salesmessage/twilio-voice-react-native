@@ -7,6 +7,7 @@ export declare enum Constants {
     'ScopeCallInvite' = "scopeCallInvite",
     'VoiceEventError' = "voiceEventError",
     'VoiceEventType' = "type",
+    'VoiceEventMissedCallNotificationTapped' = "voiceEventMissedCallNotificationTapped",
     'VoiceErrorKeyError' = "error",
     'VoiceErrorKeyCode' = "code",
     'VoiceErrorKeyMessage' = "message",

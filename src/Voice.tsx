@@ -193,6 +193,19 @@ export declare interface Voice {
     listener: Voice.Listener.Unregistered
   ): this;
 
+    //
+
+  addListener(
+    missedCallNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped,
+    listener: Voice.Listener.MissedCallNotificationTapped
+  ): this;
+  /** {@inheritDoc (Voice:interface).(addListener:4)} */
+  on(
+    callInviteNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped,
+    listener: Voice.Listener.MissedCallNotificationTapped
+  ): this;
+    
+
   /**
    * Generic event listener typings.
    * @param voiceEvent - The raised event string.
@@ -270,6 +283,8 @@ export class Voice extends EventEmitter {
        */
       [Constants.VoiceEventRegistered]: this._handleRegistered,
       [Constants.VoiceEventUnregistered]: this._handleUnregistered,
+      [Constants.VoiceEventMissedCallNotificationTapped]:
+        this._handleMissedCallNotificationTapped,
 
       /**
        * Audio Devices
@@ -414,6 +429,23 @@ export class Voice extends EventEmitter {
     }
 
     this.emit(Voice.Event.Unregistered);
+  };
+
+  private _handleMissedCallNotificationTapped = (
+    nativeVoiceEvent: NativeVoiceEvent
+  ) => {
+    if (
+      nativeVoiceEvent.type !== Constants.VoiceEventMissedCallNotificationTapped
+    ) {
+      throw new Error(
+        'Incorrect "voice#callInviteNotificationTapped" handler called for ' +
+          `type "${nativeVoiceEvent.type}".`
+      );
+    }
+
+    const { callInvite: callInviteInfo } = nativeVoiceEvent;
+
+    this.emit(Voice.Event.MissedCallNotificationTapped, callInviteInfo);
   };
 
   /**
@@ -791,6 +823,8 @@ export namespace Voice {
      * | Voice.addListener(Unregistered)}.
      */
     'Unregistered' = 'unregistered',
+
+    'MissedCallNotificationTapped' = 'missedCallNotificationTapped',
   }
 
   /**
@@ -857,6 +891,8 @@ export namespace Voice {
      * See {@link (Voice:interface).(addListener:5)}.
      */
     export type Unregistered = () => void;
+
+    export type MissedCallNotificationTapped = () => void;
 
     /**
      * Generic event listener. This should be the function signature of any
