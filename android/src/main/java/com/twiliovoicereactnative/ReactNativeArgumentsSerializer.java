@@ -94,17 +94,20 @@ class ReactNativeArgumentsSerializer {
    * @return A serialized CallInvite
    */
   public static WritableMap serializeCallInvite(@NonNull final CallRecord callRecord) {
-    // validate input
-    final UUID uuid = Objects.requireNonNull(callRecord.getUuid());
-    final CallInvite callInvite = Objects.requireNonNull(callRecord.getCallInvite());
+    if (callRecord != null && callRecord.getUuid() != null && callRecord.getCallInvite() != null) {
+      // validate input
+      final UUID uuid = Objects.requireNonNull(callRecord.getUuid());
+      final CallInvite callInvite = Objects.requireNonNull(callRecord.getCallInvite());
 
-    // serialize
-    return constructJSMap(
-      new Pair<>(CallInviteInfoUuid, uuid.toString()),
-      new Pair<>(CallInviteInfoCallSid, callInvite.getCallSid()),
-      new Pair<>(CallInviteInfoFrom, callInvite.getFrom()),
-      new Pair<>(CallInviteInfoTo, callInvite.getTo()),
-      new Pair<>(CallInviteInfoCustomParameters, serializeCallInviteCustomParameters(callInvite)));
+      // serialize
+      return constructJSMap(
+              new Pair<>(CallInviteInfoUuid, uuid.toString()),
+              new Pair<>(CallInviteInfoCallSid, callInvite.getCallSid()),
+              new Pair<>(CallInviteInfoFrom, callInvite.getFrom()),
+              new Pair<>(CallInviteInfoTo, callInvite.getTo()),
+              new Pair<>(CallInviteInfoCustomParameters, serializeCallInviteCustomParameters(callInvite)));
+    }
+    return null;
   }
 
   /**

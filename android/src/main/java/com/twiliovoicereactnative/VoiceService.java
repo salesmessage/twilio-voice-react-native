@@ -116,6 +116,28 @@ public class VoiceService extends Service {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    String action = "";
+
+    CallRecordDatabase.CallRecord callRecord = null;
+
+    try {
+      action = Objects.requireNonNull(intent.getAction());
+
+      if (action == ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL) {
+        handleMissedCallNotificationClick(intent);
+        return START_NOT_STICKY;
+      }
+
+      callRecord = getCallRecord(Objects.requireNonNull(getMessageUUID(intent)));
+    } catch (Exception e) {
+      e.printStackTrace();
+      return START_NOT_STICKY;
+    }
+
+    if (callRecord == null) {
+      return START_NOT_STICKY;
+    }
+    
     switch (Objects.requireNonNull(intent.getAction())) {
       case ACTION_INCOMING_CALL:
         incomingCall(getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
