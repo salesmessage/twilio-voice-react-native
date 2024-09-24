@@ -276,7 +276,7 @@ class NotificationUtility {
   }
 
   public static Notification createMissedCallNotificationWithLowImportance(@NonNull Context context,
-                                                                           @NonNull final CallRecord callRecord, int missedCallsValue) {
+                                                                           @NonNull final CallRecord callRecord, int missedCallsValue, String caller) {
 
     CancelledCallInvite cancelledCallInvite = Objects.requireNonNull(callRecord.getCancelledCallInvite());
 
@@ -299,6 +299,7 @@ class NotificationUtility {
     foregroundIntent.putExtra(Constants.MSG_KEY_UUID, callRecord.getUuid());
     foregroundIntent.putExtra("INBOX_DATA", inbox_data);
     foregroundIntent.putExtra("CONTACT_DATA", contact_data);
+    foregroundIntent.putExtra("CALLER", caller);
 
     PendingIntent pendingIntent = PendingIntent.getActivity(
             context,
