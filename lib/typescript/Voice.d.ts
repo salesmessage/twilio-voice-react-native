@@ -138,6 +138,9 @@ export declare interface Voice {
     addListener(unregisteredEvent: Voice.Event.Unregistered, listener: Voice.Listener.Unregistered): this;
     /** {@inheritDoc (Voice:interface).(addListener:5)} */
     on(unregisteredEvent: Voice.Event.Unregistered, listener: Voice.Listener.Unregistered): this;
+    addListener(missedCallNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
+    /** {@inheritDoc (Voice:interface).(addListener:4)} */
+    on(callInviteNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
     /**
      * Generic event listener typings.
      * @param voiceEvent - The raised event string.
@@ -228,6 +231,7 @@ export declare class Voice extends EventEmitter {
      * {@link (Voice:namespace).Event.Unregistered} event.
      */
     private _handleUnregistered;
+    private _handleMissedCallNotificationTapped;
     /**
      * Audio devices updated event handler. Generates a new list of
      * {@link (AudioDevice:class) | AudioDevice objects} and emits it.
@@ -452,7 +456,8 @@ export declare namespace Voice {
          * See {@link (Voice:interface).(addListener:5)
          * | Voice.addListener(Unregistered)}.
          */
-        'Unregistered' = "unregistered"
+        'Unregistered' = "unregistered",
+        'MissedCallNotificationTapped' = "missedCallNotificationTapped"
     }
     /**
      * Listener types for all events emitted by a {@link (Voice:class)
@@ -511,6 +516,7 @@ export declare namespace Voice {
          * See {@link (Voice:interface).(addListener:5)}.
          */
         type Unregistered = () => void;
+        type MissedCallNotificationTapped = () => void;
         /**
          * Generic event listener. This should be the function signature of any
          * event listener bound to any voice event.

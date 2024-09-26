@@ -561,6 +561,10 @@ export class Voice extends EventEmitter {
     return NativeModule.voice_getVersion();
   }
 
+  canUseFullScreenIntent(): Promise<boolean> {
+    return NativeModule.voice_canUseFullScreenIntent();
+  }
+
   /**
    * Get the Device token from the native layer.
    * @returns a Promise that resolves with a string representing the Device
