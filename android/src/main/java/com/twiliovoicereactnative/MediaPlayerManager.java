@@ -131,13 +131,17 @@ class MediaPlayerManager {
   }
 
   public void enableBluetooth() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-      if (isBluetoothHeadsetConnected()) {
-        logger.debug("Switching to bluetooth device");
-        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-        audioManager.startBluetoothSco();
-        audioManager.setBluetoothScoOn(true);
+    try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (isBluetoothHeadsetConnected()) {
+          logger.debug("Switching to bluetooth device");
+          audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+          audioManager.startBluetoothSco();
+          audioManager.setBluetoothScoOn(true);
+        }
       }
+    } catch (SecurityException e) {
+      logger.error("Could not enable bluetooth");
     }
   }
 }
