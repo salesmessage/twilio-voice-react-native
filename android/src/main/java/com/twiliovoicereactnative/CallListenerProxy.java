@@ -90,7 +90,7 @@ class CallListenerProxy implements Call.Listener {
 
     // create notification & sound
     callRecord.setNotificationId(NotificationUtility.createNotificationIdentifier());
-    getAudioSwitchManager().getAudioSwitch().activate();
+//    getAudioSwitchManager().getAudioSwitch().activate();
 //    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.RINGTONE);
     getVoiceServiceApi().raiseOutgoingCallNotification(callRecord);
 
@@ -185,7 +185,7 @@ class CallListenerProxy implements Call.Listener {
 
     if (callRecord == null) {
       getMediaPlayerManager().stop();
-      getAudioSwitchManager().getAudioSwitch().deactivate();
+//      getAudioSwitchManager().getAudioSwitch().deactivate();
 
       if (proximityManager != null) {
         proximityManager.stopProximitySensor();
@@ -199,7 +199,7 @@ class CallListenerProxy implements Call.Listener {
     // stop audio & cancel notification
     getMediaPlayerManager().stop();
 //    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
-    getAudioSwitchManager().getAudioSwitch().deactivate();
+//    getAudioSwitchManager().getAudioSwitch().deactivate();
     getVoiceServiceApi().cancelActiveCallNotification(callRecord);
 
     if (proximityManager != null) {

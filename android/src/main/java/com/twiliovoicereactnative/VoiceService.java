@@ -127,7 +127,7 @@ public class VoiceService extends Service {
     try {
       action = Objects.requireNonNull(intent.getAction());
 
-      if (action == ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL) {
+      if (action.equals(ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL)) {
         handleMissedCallNotificationClick(intent);
         return START_NOT_STICKY;
       }
@@ -203,6 +203,8 @@ public class VoiceService extends Service {
     logger.debug("disconnect");
     if (null != callRecord) {
       Objects.requireNonNull(callRecord.getVoiceCall()).disconnect();
+
+      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
     } else {
       logger.warning("No call record found");
     }
@@ -333,7 +335,7 @@ public class VoiceService extends Service {
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
-      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+//      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
       // reject call
       callRecord.getCallInvite().reject(VoiceService.this);
@@ -371,9 +373,7 @@ public class VoiceService extends Service {
       
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
-      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
-
-      Embrace.getInstance().logInfo(EventTag + " CancelledCall::AudioSwitchDeactivated");
+//      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
       CancelledCallInvite cancelledCallInvite = callRecord.getCancelledCallInvite();
       String caller = cancelledCallInvite.getFrom().replaceAll("\\+", "");
