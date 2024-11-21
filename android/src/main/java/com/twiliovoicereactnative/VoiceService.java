@@ -203,8 +203,6 @@ public class VoiceService extends Service {
     logger.debug("disconnect");
     if (null != callRecord) {
       Objects.requireNonNull(callRecord.getVoiceCall()).disconnect();
-
-      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
     } else {
       logger.warning("No call record found");
     }
