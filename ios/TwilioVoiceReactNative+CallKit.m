@@ -183,25 +183,33 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
                             completion:(void(^)(BOOL success))completionHandler {
     NSAssert(self.callInviteMap[uuid.UUIDString], @"No call invite");
     
-    TVOCallInvite *callInvite = self.callInviteMap[uuid.UUIDString];
-    TVOAcceptOptions *acceptOptions = [TVOAcceptOptions optionsWithCallInvite:callInvite block:^(TVOAcceptOptionsBuilder *builder) {
-        builder.uuid = uuid;
-        builder.callMessageDelegate = self;
-    }];
+    @try {
+        TVOCallInvite *callInvite = self.callInviteMap[uuid.UUIDString];
+        TVOAcceptOptions *acceptOptions = [TVOAcceptOptions optionsWithCallInvite:callInvite block:^(TVOAcceptOptionsBuilder *builder) {
+            builder.uuid = uuid;
+            builder.callMessageDelegate = self;
+        }];
 
-    TVOCall *call = [callInvite acceptWithOptions:acceptOptions delegate:self];
+        TVOCall *call = [callInvite acceptWithOptions:acceptOptions delegate:self];
 
-    if (!call) {
-        completionHandler(NO);
-    } else {
-        self.callMap[call.uuid.UUIDString] = call;
-    }
+        if (!call) {
+            completionHandler(NO);
+        } else {
+            self.callMap[call.uuid.UUIDString] = call;
+        }
 
-    [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite
                        body:@{
                          kTwilioVoiceReactNativeCallInviteEventKeyType: kTwilioVoiceReactNativeCallInviteEventTypeValueAccepted,
                          kTwilioVoiceReactNativeCallInviteEventKeyCallSid: callInvite.callSid,
                          kTwilioVoiceReactNativeEventKeyCallInvite: [self callInviteInfo:callInvite]}];
+        
+    } @catch (NSException *exception) {
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                        body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                            kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @31500,
+                            kTwilioVoiceReactNativeVoiceErrorKeyMessage: exception.description}}];
+    }
 }
 
 - (void)updateCall:(NSString *)uuid callerHandle:(NSString *)handle {
