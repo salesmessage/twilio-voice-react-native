@@ -21,6 +21,7 @@ static NSString * const kTwilioVoiceReactNativeScopeCallInvite = @"scopeCallInvi
 // Common
 static NSString * const kTwilioVoiceReactNativeVoiceEventError = @"voiceEventError";
 static NSString * const kTwilioVoiceReactNativeVoiceEventType = @"type";
+static NSString * const kTwilioVoiceReactNativeVoiceEventMissedCallNotificationTapped = @"voiceEventMissedCallNotificationTapped";
 
 // Error
 static NSString * const kTwilioVoiceReactNativeVoiceErrorKeyError = @"error";
