@@ -433,6 +433,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void voice_register(String token, Promise promise) {
+    getVoiceServiceApi().onRegisterCall();
+
     FirebaseMessaging.getInstance().getToken()
       .addOnCompleteListener(task -> {
         if (!task.isSuccessful()) {

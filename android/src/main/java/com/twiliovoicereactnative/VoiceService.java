@@ -13,6 +13,7 @@ import static com.twiliovoicereactnative.CommonConstants.VoiceErrorKeyError;
 import static com.twiliovoicereactnative.CommonConstants.VoiceEventError;
 import static com.twiliovoicereactnative.CommonConstants.VoiceEventType;
 import static com.twiliovoicereactnative.CommonConstants.VoiceEventTypeValueIncomingCallInvite;
+import static com.twiliovoicereactnative.CommonConstants.VoiceEventMissedCallNotificationTapped;
 import static com.twiliovoicereactnative.Constants.ACTION_ACCEPT_CALL;
 import static com.twiliovoicereactnative.Constants.ACTION_CALL_DISCONNECT;
 import static com.twiliovoicereactnative.Constants.ACTION_CANCEL_CALL;
@@ -20,6 +21,7 @@ import static com.twiliovoicereactnative.Constants.ACTION_CANCEL_ACTIVE_CALL_NOT
 import static com.twiliovoicereactnative.Constants.ACTION_FOREGROUND_AND_DEPRIORITIZE_INCOMING_CALL_NOTIFICATION;
 import static com.twiliovoicereactnative.Constants.ACTION_INCOMING_CALL;
 import static com.twiliovoicereactnative.Constants.ACTION_PUSH_APP_TO_FOREGROUND;
+import static com.twiliovoicereactnative.Constants.ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL;
 import static com.twiliovoicereactnative.Constants.ACTION_RAISE_OUTGOING_CALL_NOTIFICATION;
 import static com.twiliovoicereactnative.Constants.ACTION_REJECT_CALL;
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CALL_INVITE_INFO;
@@ -50,25 +52,42 @@ import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.ServiceCompat;
 
 import com.facebook.react.bridge.WritableMap;
 import com.twilio.voice.AcceptOptions;
 import com.twilio.voice.Call;
+import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.Voice;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Timer;
 import java.util.UUID;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class VoiceService extends Service {
   private static final SDKLog logger = new SDKLog(VoiceService.class);
+  private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
+
+  private static boolean isRegisterExecuted = false;
+
   public class VoiceServiceAPI extends Binder {
     public Call connect(@NonNull ConnectOptions cxnOptions,
                         @NonNull Call.Listener listener) {
       logger.debug("connect");
       return Voice.connect(VoiceService.this, cxnOptions, listener);
     }
+
+    public void onRegisterCall() {
+      isRegisterExecuted = true;
+    }
+
     public void disconnect(final CallRecordDatabase.CallRecord callRecord) {
       VoiceService.this.disconnect(callRecord);
     }
@@ -134,6 +153,10 @@ public class VoiceService extends Service {
           foregroundAndDeprioritizeIncomingCallNotification(
             getCallRecord(Objects.requireNonNull(getMessageUUID(intent))));
           break;
+        case ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL:
+          handleMissedCallNotificationClick(intent);
+          break;
+
         case ACTION_PUSH_APP_TO_FOREGROUND:
           logger.warning("VoiceService received foreground request, ignoring");
           break;
@@ -271,6 +294,8 @@ public class VoiceService extends Service {
     // take down notification
     removeNotification(callRecord.getNotificationId());
 
+    cancelNotification(callRecord);
+
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
 //    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
@@ -295,21 +320,52 @@ public class VoiceService extends Service {
   private void cancelCall(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("CancelCall: " + callRecord.getUuid());
 
-    // take down notification
-    removeNotification(callRecord.getNotificationId());
+    try {
+      // take down notification
+      cancelNotification(callRecord);
 
-    // stop ringer sound
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
-//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::NotificationRemoved");
 
-    // notify JS layer
-    sendJSEvent(
-      ScopeCallInvite,
-      constructJSMap(
-        new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueCancelled),
-        new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
-        new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
-        new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
+      // stop ringer sound
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+//      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+
+      CancelledCallInvite cancelledCallInvite = callRecord.getCancelledCallInvite();
+      String caller = cancelledCallInvite.getFrom().replaceAll("\\+", "");
+      logger.debug("from: " + caller);
+      String callerShort = caller.substring(caller.length() - 9);
+
+      int callerNumber = Integer.parseInt(callerShort);
+
+      if (!missedCallsMap.containsKey(caller)) {
+        missedCallsMap.put(caller, 0);
+      }
+
+      int missedCallsValue = missedCallsMap.get(caller);
+
+      missedCallsMap.put(caller, ++missedCallsValue);
+
+      Notification notification = NotificationUtility.createMissedCallNotificationWithLowImportance(
+              VoiceService.this,
+              callRecord, missedCallsValue, caller);
+      createOrReplaceNotification2(getApplicationContext(), callerNumber, notification);
+
+//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::MissedCallNotificationCreated");
+
+      // notify JS layer
+      sendJSEvent(
+              ScopeCallInvite,
+              constructJSMap(
+                      new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueCancelled),
+                      new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
+                      new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
+                      new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
+
+//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::JSEventSent");
+    } catch (Exception e) {
+//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::Error::" + e.getMessage());
+      e.printStackTrace();
+    }
   }
   private void raiseOutgoingCallNotification(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("raiseOutgoingCallNotification: " + callRecord.getUuid());
@@ -355,6 +411,29 @@ public class VoiceService extends Service {
       (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     mNotificationManager.notify(notificationId, notification);
   }
+
+  private static void createOrReplaceNotification2(Context context,
+                                                   final int notificationId,
+                                                   final Notification notification) {
+    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            == PackageManager.PERMISSION_GRANTED) {
+      notificationManager.notify(notificationId, notification);
+    } else {
+      logger.warning("WARNING: Notification not posted, permission not granted");
+    }
+  }
+
+
+  private void cancelNotification(final CallRecordDatabase.CallRecord callRecord) {
+    logger.debug("cancelNotification");
+    // only take down notification & stop any active sounds if one is active
+    if (null != callRecord) {
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      removeNotification(callRecord.getNotificationId());
+    }
+  }
+
   private void createOrReplaceForegroundNotification(final int notificationId,
                                                      final Notification notification) {
     if (ActivityCompat.checkSelfPermission(VoiceService.this, Manifest.permission.POST_NOTIFICATIONS)
@@ -402,5 +481,44 @@ public class VoiceService extends Service {
       new Pair<>(VoiceEventType, VoiceEventError),
       new Pair<>(VoiceErrorKeyError, serializeError(errorCode, errorMessage))
     ));
+  }
+
+  private void postponeMissedCallNotificationCallback(WritableMap payload, Integer attempt) {
+    if (attempt > 20) {
+      return;
+    }
+
+    if (isRegisterExecuted) {
+      sendJSEvent(
+              ScopeVoice,
+              constructJSMap(
+                      new Pair<>(VoiceEventType, VoiceEventMissedCallNotificationTapped),
+                      new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, payload)));
+
+      return;
+    }
+
+    new Timer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        postponeMissedCallNotificationCallback(payload, attempt + 1);
+      }
+    }, 1000L);
+  }
+
+  private void handleMissedCallNotificationClick(Intent intent) {
+    logger.debug("Missed Call Notification Click Message Received");
+
+    String INBOX_DATA = (String) intent.getSerializableExtra("INBOX_DATA");
+    String CONTACT_DATA = (String) intent.getSerializableExtra("CONTACT_DATA");
+    String CALLER = (String) intent.getSerializableExtra("CALLER");
+
+    WritableMap payload = constructJSMap(
+            new Pair<>("inbox", INBOX_DATA),
+            new Pair<>("contact", CONTACT_DATA));
+
+    postponeMissedCallNotificationCallback(payload, 0);
+
+    missedCallsMap.put(CALLER, 0);
   }
 }
