@@ -270,75 +270,79 @@ public class VoiceService extends Service {
       return;
     }
 
-    // cancel existing notification & put up in call
-    Notification notification = NotificationUtility.createCallAnsweredNotificationWithLowImportance(
-      VoiceService.this,
-      callRecord);
-    createOrReplaceForegroundNotification(callRecord.getNotificationId(), notification);
+    try {
+      // cancel existing notification & put up in call
+      Notification notification = NotificationUtility.createCallAnsweredNotificationWithLowImportance(
+              VoiceService.this,
+              callRecord);
+      createOrReplaceForegroundNotification(callRecord.getNotificationId(), notification);
 
-    // stop ringer sound
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
+      // stop ringer sound
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
-    // accept call
-    AcceptOptions acceptOptions = new AcceptOptions.Builder()
-      .enableDscp(true)
-      .callMessageListener(new CallMessageListenerProxy())
-      .build();
+      // accept call
+      AcceptOptions acceptOptions = new AcceptOptions.Builder()
+              .enableDscp(true)
+              .callMessageListener(new CallMessageListenerProxy())
+              .build();
 
-    callRecord.setCall(
-      callRecord.getCallInvite().accept(
-        VoiceService.this,
-        acceptOptions,
-        new CallListenerProxy(callRecord.getUuid(), VoiceService.this)));
-    callRecord.setCallInviteUsedState();
+      callRecord.setCall(
+              callRecord.getCallInvite().accept(
+                      VoiceService.this,
+                      acceptOptions,
+                      new CallListenerProxy(callRecord.getUuid(), VoiceService.this)));
+      callRecord.setCallInviteUsedState();
 
-    // handle if event spawned from JS
-    if (null != callRecord.getCallAcceptedPromise()) {
-      callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
-    }
+      // handle if event spawned from JS
+      if (null != callRecord.getCallAcceptedPromise()) {
+        callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
+      }
 
-    VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
+      VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
 
-    // notify JS layer
-    sendJSEvent(
-      ScopeCallInvite,
-      constructJSMap(
-        new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueAccepted),
-        new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
-        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+      // notify JS layer
+      sendJSEvent(
+              ScopeCallInvite,
+              constructJSMap(
+                      new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueAccepted),
+                      new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
+                      new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+    } catch (Exception ignored) { }
   }
   private void rejectCall(final CallRecordDatabase.CallRecord callRecord) {
-    logger.debug("rejectCall: " + callRecord.getUuid());
+    try {
+      logger.debug("rejectCall: " + callRecord.getUuid());
 
-    // remove call record
-    getCallRecordDatabase().remove(callRecord);
+      // remove call record
+      getCallRecordDatabase().remove(callRecord);
 
-    // take down notification
-    removeNotification(callRecord.getNotificationId());
+      // take down notification
+      removeNotification(callRecord.getNotificationId());
 
-    cancelNotification(callRecord);
+      cancelNotification(callRecord);
 
-    // stop ringer sound
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
-//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+      // stop ringer sound
+      VoiceApplicationProxy.getMediaPlayerManager().stop();
+      // VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
-    // reject call
-    callRecord.getCallInvite().reject(VoiceService.this);
-    callRecord.setCallInviteUsedState();
+      // reject call
+      callRecord.getCallInvite().reject(VoiceService.this);
+      callRecord.setCallInviteUsedState();
 
-    // handle if event spawned from JS
-    if (null != callRecord.getCallRejectedPromise()) {
-      callRecord.getCallRejectedPromise().resolve(callRecord.getUuid().toString());
-    }
+      // handle if event spawned from JS
+      if (null != callRecord.getCallRejectedPromise()) {
+        callRecord.getCallRejectedPromise().resolve(callRecord.getUuid().toString());
+      }
 
-    // notify JS layer
-    sendJSEvent(
-      ScopeCallInvite,
-      constructJSMap(
-        new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueRejected),
-        new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
-        new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+      // notify JS layer
+      sendJSEvent(
+              ScopeCallInvite,
+              constructJSMap(
+                      new Pair<>(CallInviteEventKeyType, CallInviteEventTypeValueRejected),
+                      new Pair<>(CallInviteEventKeyCallSid, callRecord.getCallSid()),
+                      new Pair<>(JS_EVENT_KEY_CALL_INVITE_INFO, serializeCallInvite(callRecord))));
+    } catch (Exception ignored) { }
   }
   private void cancelCall(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("CancelCall: " + callRecord.getUuid());
@@ -346,8 +350,6 @@ public class VoiceService extends Service {
     try {
       // take down notification
       cancelNotification(callRecord);
-
-//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::NotificationRemoved");
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
@@ -373,8 +375,6 @@ public class VoiceService extends Service {
               callRecord, missedCallsValue, caller);
       createOrReplaceNotification2(getApplicationContext(), callerNumber, notification);
 
-//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::MissedCallNotificationCreated");
-
       // notify JS layer
       sendJSEvent(
               ScopeCallInvite,
@@ -384,9 +384,7 @@ public class VoiceService extends Service {
                       new Pair<>(JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO, serializeCancelledCallInvite(callRecord)),
                       new Pair<>(VoiceErrorKeyError, serializeCallException(callRecord))));
 
-//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::JSEventSent");
     } catch (Exception e) {
-//      Embrace.getInstance().logInfo(EventTag + " CancelledCall::Error::" + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -411,7 +409,7 @@ public class VoiceService extends Service {
     createOrReplaceNotification(callRecord.getNotificationId(), notification);
 
     // stop active sound (if any)
-//    VoiceApplicationProxy.getMediaPlayerManager().stop();
+    // VoiceApplicationProxy.getMediaPlayerManager().stop();
 
     // notify JS layer
     sendJSEvent(
@@ -446,8 +444,7 @@ public class VoiceService extends Service {
       logger.warning("WARNING: Notification not posted, permission not granted");
     }
   }
-
-
+  
   private void cancelNotification(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("cancelNotification");
     // only take down notification & stop any active sounds if one is active
