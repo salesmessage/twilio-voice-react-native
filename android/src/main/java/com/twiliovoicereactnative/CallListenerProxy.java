@@ -157,7 +157,7 @@ class CallListenerProxy implements Call.Listener {
     // stop audio & cancel notification
     getMediaPlayerManager().stop();
 //    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
-    getAudioSwitchManager().getAudioSwitch().deactivate();
+//    getAudioSwitchManager().getAudioSwitch().deactivate();
     getVoiceServiceApi().cancelActiveCallNotification(callRecord);
 
     if (proximityManager != null) {
