@@ -276,7 +276,7 @@ public class VoiceService extends Service {
       Notification notification = NotificationUtility.createCallAnsweredNotificationWithLowImportance(
               VoiceService.this,
               callRecord);
-      createOrReplaceForegroundNotification(callRecord.getNotificationId(), notification);
+      createOrReplaceNotification(callRecord.getNotificationId(), notification);
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
@@ -397,7 +397,7 @@ public class VoiceService extends Service {
       NotificationUtility.createOutgoingCallNotificationWithLowImportance(
         VoiceService.this,
         callRecord);
-    createOrReplaceForegroundNotification(callRecord.getNotificationId(), notification);
+    createOrReplaceNotification(callRecord.getNotificationId(), notification);
   }
   private void foregroundAndDeprioritizeIncomingCallNotification(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("foregroundAndDeprioritizeIncomingCallNotification: " + callRecord.getUuid());
@@ -424,7 +424,7 @@ public class VoiceService extends Service {
     // only take down notification & stop any active sounds if one is active
     if (null != callRecord) {
       VoiceApplicationProxy.getMediaPlayerManager().stop();
-      removeForegroundNotification();
+      removeNotification(callRecord.getNotificationId());
     }
   }
   private void createOrReplaceNotification(final int notificationId,
@@ -455,15 +455,15 @@ public class VoiceService extends Service {
     }
   }
 
-  private void createOrReplaceForegroundNotification(final int notificationId,
-                                                     final Notification notification) {
-    if (ActivityCompat.checkSelfPermission(VoiceService.this, Manifest.permission.POST_NOTIFICATIONS)
-      == PackageManager.PERMISSION_GRANTED) {
-      foregroundNotification(notificationId, notification);
-    } else {
-      logger.warning("WARNING: Notification not posted, permission not granted");
-    }
-  }
+//  private void createOrReplaceForegroundNotification(final int notificationId,
+//                                                     final Notification notification) {
+//    if (ActivityCompat.checkSelfPermission(VoiceService.this, Manifest.permission.POST_NOTIFICATIONS)
+//      == PackageManager.PERMISSION_GRANTED) {
+//      foregroundNotification(notificationId, notification);
+//    } else {
+//      logger.warning("WARNING: Notification not posted, permission not granted");
+//    }
+//  }
   private void removeNotification(final int notificationId) {
     logger.debug("removeNotification");
     NotificationManager mNotificationManager =
@@ -474,18 +474,18 @@ public class VoiceService extends Service {
     logger.debug("removeForegroundNotification");
     ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
   }
-  private void foregroundNotification(int id, Notification notification) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      try {
-        startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
-      } catch (Exception e) {
-        sendPermissionsError();
-        logger.warning(e, "Failed to place notification due to lack of permissions");
-      }
-    } else {
-      startForeground(id, notification);
-    }
-  }
+//  private void foregroundNotification(int id, Notification notification) {
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//      try {
+//        startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+//      } catch (Exception e) {
+//        sendPermissionsError();
+//        logger.warning(e, "Failed to place notification due to lack of permissions");
+//      }
+//    } else {
+//      startForeground(id, notification);
+//    }
+//  }
   private static UUID getMessageUUID(@NonNull final Intent intent) {
     return (UUID)intent.getSerializableExtra(Constants.MSG_KEY_UUID);
   }
