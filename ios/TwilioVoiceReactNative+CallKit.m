@@ -70,10 +70,18 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
 
 - (void)reportNewIncomingCall:(TVOCallInvite *)callInvite {
     NSString *handleName = callInvite.from;
-    NSDictionary *customParams = callInvite.customParameters;
-    
-    if (customParams[kCustomParametersKeyCallerName]) {
-        handleName = customParams[kCustomParametersKeyCallerName];
+
+    @try {
+        NSDictionary *customParams = callInvite.customParameters;
+        
+        if (customParams[kCustomParametersKeyCallerName]) {
+            handleName = customParams[kCustomParametersKeyCallerName];
+        }
+    } @catch (NSException *exception) {
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                        body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                            kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @31500,
+                            kTwilioVoiceReactNativeVoiceErrorKeyMessage: exception.description}}];
     }
 
     if (handleName == nil) {
@@ -96,6 +104,11 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
             NSLog(@"Incoming call successfully reported.");
         } else {
             NSLog(@"Failed to report incoming call: %@.", error);
+            
+            [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                            body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                                kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @(error.code),
+                                                                             kTwilioVoiceReactNativeVoiceErrorKeyMessage: [NSString stringWithFormat:@"reportNewIncomingCallWithUUID ERROR: %@", [error localizedDescription]] }}];
         }
     }];
 }
