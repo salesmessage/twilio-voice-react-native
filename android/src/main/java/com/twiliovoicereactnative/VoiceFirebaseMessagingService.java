@@ -64,25 +64,30 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     logger.debug("Bundle data: " + remoteMessage.getData());
     logger.debug("From: " + remoteMessage.getFrom());
 
-    PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
-    boolean isScreenOn = pm.isInteractive(); // check if screen is on
-    if (!isScreenOn) {
-      PowerManager.WakeLock wl = pm.newWakeLock(
-        PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
-        "VoiceFirebaseMessagingService:notificationLock");
-      wl.acquire(30000); //set your time in milliseconds
-    }
-
     // Check if message contains a data payload.
     if (!remoteMessage.getData().isEmpty()) {
-      if (!Voice.handleMessage(
-        this,
-        remoteMessage.getData(),
-        new MessageHandler(),
-        new CallMessageListenerProxy())) {
-        logger.error("The message was not a valid Twilio Voice SDK payload: " +
-          remoteMessage.getData());
-      }
+        if (Voice.handleMessage(
+            this,
+            remoteMessage.getData(),
+            new MessageHandler(),
+            new CallMessageListenerProxy())) {
+            // Only create WakeLock if it's a valid Twilio Voice message
+            PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+            boolean isScreenOn = pm.isInteractive();
+            if (!isScreenOn) {
+                PowerManager.WakeLock wl = pm.newWakeLock(
+                    PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                    "VoiceFirebaseMessagingService:notificationLock");
+                try {
+                    wl.acquire(30000);
+                } finally {
+                    wl.release();
+                }
+            }
+        } else {
+            logger.error("The message was not a valid Twilio Voice SDK payload: " +
+                remoteMessage.getData());
+        }
     }
   }
 }
