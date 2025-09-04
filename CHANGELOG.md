@@ -1,5 +1,78 @@
-1.3.0 (In Progress)
+1.7.0 (In Progress)
 ===================
+
+## Fixes
+
+- The call contact handle template feature now caches the set value. This fixes an issue where the handle template value would be `null` when an incoming call was received and the React Native JS runtime was not initialized or was restarted by the OS.
+
+## Features
+
+### Platform Specific Features
+
+#### Android
+
+- Added a new API to check for and request Full Screen Notification permissions on Android platforms.
+
+1.6.1 (July 7, 2025)
+====================
+
+## Changes
+
+### Platform Specific Changes
+
+#### Android
+
+- Added Bluetooth permissions to the Twilio Voice RN SDK manifest.
+
+## Fixes
+
+### Platform Specific Fixes
+
+#### Android
+
+- Updated Audioswitch library to version `1.2.2`. This should fix missing Bluetooth audio devices on Android platforms.
+
+1.6.0 (June 18, 2025)
+=====================
+
+## Features
+
+- Added support for React Native applications using the New Architecture. If you are migrating your app from the Old Architecture to the New Architecture, and are already using the Twilio Voice React Native SDK, you will need to adjust your `MainApplication.java` file. Please see the updated Getting Started docs for [Java](/docs/getting-started-android-java.md) or [Kotlin](/docs/getting-started-android-kotlin.md).
+
+  - If you are encountering this error:
+  `java.lang.IllegalArgumentException: You can call getDefaultReactHost only with instances of DefaultReactNativeHost` when attempting to use this SDK with a NewArch application, please update your application logic in accordance with our updated Android Getting Started guides as linked above.
+
+1.5.0 (April 2, 2025)
+===================
+
+## Fixes
+
+### Platform Specific Fixes
+
+#### Android
+
+- Updated the RNModule methods to invoke all Voice Service API methods from only
+  the main thread.
+
+
+1.4.0 (Feb 11, 2025)
+====================
+
+## Changes
+
+### Platform Specific Changes
+
+#### Android
+
+- Updated the Twilio Voice Android SDK dependency to `6.7.1`.
+
+#### iOS
+
+- Updated the Twilio Voice iOS SDK dependency to `6.12.1`.
+
+
+1.3.0 (Dec 10, 2024)
+====================
 
 ## Changes
 
