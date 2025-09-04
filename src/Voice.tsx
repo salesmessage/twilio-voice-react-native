@@ -388,7 +388,7 @@ export class Voice extends EventEmitter {
       error: { code, message },
     } = nativeVoiceEvent;
     const error = constructTwilioError(message, code);
-    this.emit(Voice.Event.Error, error);
+    this.emit(Voice.Event.Error, error, message);
   };
 
   /**
