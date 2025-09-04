@@ -13,6 +13,8 @@
 
 NSString * const kDefaultCallKitConfigurationName = @"Twilio Voice React Native";
 
+NSString * const kCustomParametersKeyCallerName = @"CallerName";
+
 @interface TwilioVoiceReactNative (CallKit) <CXProviderDelegate, TVOCallDelegate, AVAudioPlayerDelegate>
 
 @end
@@ -79,6 +81,12 @@ NSString * const kDefaultCallKitConfigurationName = @"Twilio Voice React Native"
 
 - (void)reportNewIncomingCall:(TVOCallInvite *)callInvite {
     NSString *handleName = callInvite.from;
+    NSDictionary *customParams = callInvite.customParameters;
+    
+    if (customParams[kCustomParametersKeyCallerName]) {
+        handleName = customParams[kCustomParametersKeyCallerName];
+    }
+
     if (handleName == nil) {
         handleName = @"Unknown Caller";
     }
