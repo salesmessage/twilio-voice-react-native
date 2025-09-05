@@ -256,6 +256,9 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
           CallRecord.Direction.OUTGOING,
           notificationDisplayName);
         getCallRecordDatabase().add(callRecord);
+
+        new MediaPlayerManager(getReactApplicationContext()).enableBluetooth();
+
         // notify JS layer
         promise.resolve(serializeCall(callRecord));
       } catch (SecurityException e) {

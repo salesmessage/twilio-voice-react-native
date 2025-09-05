@@ -193,8 +193,8 @@ public class VoiceService extends Service {
 
 
     // play ringer sound
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
-    VoiceApplicationProxy.getMediaPlayerManager().play(MediaPlayerManager.SoundTable.INCOMING);
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
+    VoiceApplicationProxy.getMediaPlayerManager().play();
 
     // trigger JS layer
     sendJSEvent(
@@ -214,7 +214,8 @@ public class VoiceService extends Service {
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
-      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+//      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
       // report an error to JS layer
       sendPermissionsError();
@@ -251,6 +252,8 @@ public class VoiceService extends Service {
       callRecord.getCallAcceptedPromise().resolve(serializeCall(callRecord));
     }
 
+    VoiceApplicationProxy.getMediaPlayerManager().enableBluetooth();
+
     // notify JS layer
     sendJSEvent(
       ScopeCallInvite,
@@ -270,7 +273,7 @@ public class VoiceService extends Service {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
     // reject call
     callRecord.getCallInvite().reject(VoiceService.this);
@@ -297,7 +300,7 @@ public class VoiceService extends Service {
 
     // stop ringer sound
     VoiceApplicationProxy.getMediaPlayerManager().stop();
-    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
+//    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
     // notify JS layer
     sendJSEvent(
@@ -329,7 +332,7 @@ public class VoiceService extends Service {
     createOrReplaceNotification(callRecord.getNotificationId(), notification);
 
     // stop active sound (if any)
-    VoiceApplicationProxy.getMediaPlayerManager().stop();
+//    VoiceApplicationProxy.getMediaPlayerManager().stop();
 
     // notify JS layer
     sendJSEvent(
