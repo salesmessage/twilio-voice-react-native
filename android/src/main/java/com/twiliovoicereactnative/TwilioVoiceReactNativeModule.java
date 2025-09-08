@@ -60,6 +60,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   private static final String GLOBAL_ENV = "com.twilio.voice.env";
   private static final String SDK_VERSION = "com.twilio.voice.env.sdk.version";
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
+  private ProximityManager proximityManager;
+  private EventManager eventManager;
 
   /**
    * Map of common constant score strings to the Call.Score enum.
@@ -110,6 +112,10 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
         audioDeviceInfo.putString(VoiceEventType, VoiceEventAudioDevicesUpdated);
         getJSEventEmitter().sendEvent(ScopeVoice, audioDeviceInfo);
       });
+
+    eventManager = new EventManager(reactContext);
+    proximityManager = new ProximityManager(reactContext, eventManager);
+    CallListenerProxy.proximityManager = proximityManager;
   }
 
   /**
@@ -427,6 +433,8 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void call_disconnect(String uuid, Promise promise) {
     logger.debug(".call_disconnect()");
+
+    proximityManager.stopProximitySensor();
 
     mainHandler.post(() -> {
       logger.debug(".call_disconnect() > runnable");
