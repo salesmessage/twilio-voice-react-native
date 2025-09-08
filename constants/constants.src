@@ -12,6 +12,7 @@ ScopeCallInvite=scopeCallInvite
 // Common
 VoiceEventError=voiceEventError
 VoiceEventType=type
+VoiceEventMissedCallNotificationTapped=voiceEventMissedCallNotificationTapped
 
 // Error
 VoiceErrorKeyError=error
