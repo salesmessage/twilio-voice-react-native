@@ -556,6 +556,7 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void voice_register(String token, Promise promise) {
     logger.debug(".voice_register()");
+    getVoiceServiceApi().onRegisterCall();
 
     mainHandler.post(() -> {
       logger.debug(".voice_register() > runnable");
