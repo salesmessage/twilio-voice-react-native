@@ -19,6 +19,7 @@ enum Event
 |  AudioDevicesUpdated | <code>&quot;audioDevicesUpdated&quot;</code> | Raised when there is a change in available audio devices. |
 |  CallInvite | <code>&quot;callInvite&quot;</code> | Raised when there is an incoming call invite. |
 |  Error | <code>&quot;error&quot;</code> | Raised when the SDK encounters an error. |
+|  MissedCallNotificationTapped | <code>&quot;missedCallNotificationTapped&quot;</code> |  |
 |  Registered | <code>&quot;registered&quot;</code> | Raised when the SDK is registered for incoming calls. |
 |  Unregistered | <code>&quot;unregistered&quot;</code> | Raised when the SDK is unregistered for incoming calls. |
 

@@ -980,6 +980,8 @@ export interface Voice {
     addListener(errorEvent: Voice.Event.Error, listener: Voice.Listener.Error): this;
     addListener(registeredEvent: Voice.Event.Registered, listener: Voice.Listener.Registered): this;
     addListener(unregisteredEvent: Voice.Event.Unregistered, listener: Voice.Listener.Unregistered): this;
+    // (undocumented)
+    addListener(missedCallNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
     addListener(voiceEvent: Voice.Event, listener: Voice.Listener.Generic): this;
     // @internal (undocumented)
     emit(voiceEvent: Voice.Event.AudioDevicesUpdated, audioDevices: AudioDevice[], selectedDevice?: AudioDevice): boolean;
@@ -998,6 +1000,8 @@ export interface Voice {
     on(errorEvent: Voice.Event.Error, listener: Voice.Listener.Error): this;
     on(registeredEvent: Voice.Event.Registered, listener: Voice.Listener.Registered): this;
     on(unregisteredEvent: Voice.Event.Unregistered, listener: Voice.Listener.Unregistered): this;
+    on(callInviteNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
+    // (undocumented)
     on(voiceEvent: Voice.Event, listener: Voice.Listener.Generic): this;
 }
 
@@ -1033,6 +1037,8 @@ export namespace Voice {
         'AudioDevicesUpdated' = "audioDevicesUpdated",
         'CallInvite' = "callInvite",
         'Error' = "error",
+        // (undocumented)
+        'MissedCallNotificationTapped' = "missedCallNotificationTapped",
         'Registered' = "registered",
         'Unregistered' = "unregistered"
     }
@@ -1041,6 +1047,8 @@ export namespace Voice {
         export type CallInvite = (callInvite: CallInvite) => void;
         export type Error = (error: TwilioError) => void;
         export type Generic = (...args: any[]) => void;
+        // (undocumented)
+        export type MissedCallNotificationTapped = () => void;
         export type Registered = () => void;
         export type Unregistered = () => void;
     }

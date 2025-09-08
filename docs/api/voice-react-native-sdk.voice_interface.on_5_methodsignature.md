@@ -4,20 +4,20 @@
 
 ## Voice.on() method
 
-Generic event listener typings.
+Registered event. Raised when the SDK is registered for incoming calls.
 
 <b>Signature:</b>
 
 ```typescript
-on(voiceEvent: Voice.Event, listener: Voice.Listener.Generic): this;
+on(callInviteNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
 ```
 
 ## Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  voiceEvent | [Voice.Event](./voice-react-native-sdk.voice_namespace.event_enum.md) | The raised event string. |
-|  listener | [Voice.Listener.Generic](./voice-react-native-sdk.voice_namespace.listener_namespace.generic_typealias.md) | A listener function that will be invoked when the event is raised. |
+|  callInviteNotificationTappedEvent | [Voice.Event.MissedCallNotificationTapped](./voice-react-native-sdk.voice_namespace.event_enum.md) |  |
+|  listener | [Voice.Listener.MissedCallNotificationTapped](./voice-react-native-sdk.voice_namespace.listener_namespace.missedcallnotificationtapped_typealias.md) | A listener function that will be invoked when the event is raised. |
 
 <b>Returns:</b>
 

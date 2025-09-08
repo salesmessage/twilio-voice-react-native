@@ -20,6 +20,7 @@ namespace Listener
 |  [CallInvite](./voice-react-native-sdk.voice_namespace.listener_namespace.callinvite_typealias.md) | Call invite event listener. This should be the function signature of an event listener bound to the [Voice.Event.CallInvite](./voice-react-native-sdk.voice_namespace.event_enum.md) event. |
 |  [Error](./voice-react-native-sdk.voice_namespace.listener_namespace.error_typealias.md) | Error event listener. This should be the function signature of an event listener bound to the [Voice.Event.Error](./voice-react-native-sdk.voice_namespace.event_enum.md) event. |
 |  [Generic](./voice-react-native-sdk.voice_namespace.listener_namespace.generic_typealias.md) | Generic event listener. This should be the function signature of any event listener bound to any voice event. |
+|  [MissedCallNotificationTapped](./voice-react-native-sdk.voice_namespace.listener_namespace.missedcallnotificationtapped_typealias.md) |  |
 |  [Registered](./voice-react-native-sdk.voice_namespace.listener_namespace.registered_typealias.md) | Registered event listener. This should be the function signature of an event listener bound to the [Voice.Event.Registered](./voice-react-native-sdk.voice_namespace.event_enum.md) event. |
 |  [Unregistered](./voice-react-native-sdk.voice_namespace.listener_namespace.unregistered_typealias.md) | Unregistered event listener. This should be the function signature of an event listener bound to the [Voice.Event.Unregistered](./voice-react-native-sdk.voice_namespace.event_enum.md) event. |
 

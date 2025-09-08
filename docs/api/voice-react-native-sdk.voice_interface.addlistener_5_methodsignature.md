@@ -4,24 +4,20 @@
 
 ## Voice.addListener() method
 
-Generic event listener typings.
-
 <b>Signature:</b>
 
 ```typescript
-addListener(voiceEvent: Voice.Event, listener: Voice.Listener.Generic): this;
+addListener(missedCallNotificationTappedEvent: Voice.Event.MissedCallNotificationTapped, listener: Voice.Listener.MissedCallNotificationTapped): this;
 ```
 
 ## Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  voiceEvent | [Voice.Event](./voice-react-native-sdk.voice_namespace.event_enum.md) | The raised event string. |
-|  listener | [Voice.Listener.Generic](./voice-react-native-sdk.voice_namespace.listener_namespace.generic_typealias.md) | A listener function that will be invoked when the event is raised. |
+|  missedCallNotificationTappedEvent | [Voice.Event.MissedCallNotificationTapped](./voice-react-native-sdk.voice_namespace.event_enum.md) |  |
+|  listener | [Voice.Listener.MissedCallNotificationTapped](./voice-react-native-sdk.voice_namespace.listener_namespace.missedcallnotificationtapped_typealias.md) |  |
 
 <b>Returns:</b>
 
 this
-
-- The call object.
 

@@ -27,11 +27,13 @@ Note that the `on` function is an alias for the `addListener` function. They sha
 |  [addListener(errorEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_2_methodsignature.md) | Error event. Raised when the SDK encounters an error. |
 |  [addListener(registeredEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_3_methodsignature.md) | Registered event. Raised when the SDK is registered for incoming calls. |
 |  [addListener(unregisteredEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_4_methodsignature.md) | Unregistered event. Raised when the SDK is unregistered for incoming calls. |
-|  [addListener(voiceEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_5_methodsignature.md) | Generic event listener typings. |
+|  [addListener(missedCallNotificationTappedEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_5_methodsignature.md) |  |
+|  [addListener(voiceEvent, listener)](./voice-react-native-sdk.voice_interface.addlistener_6_methodsignature.md) | Generic event listener typings. |
 |  [on(audioDevicesUpdatedEvent, listener)](./voice-react-native-sdk.voice_interface.on_methodsignature.md) | Audio devices updated event. Raised when the list of audio devices changes. |
 |  [on(callInviteEvent, listener)](./voice-react-native-sdk.voice_interface.on_1_methodsignature.md) | Call invite event. Raised when an incoming call invite is received. |
 |  [on(errorEvent, listener)](./voice-react-native-sdk.voice_interface.on_2_methodsignature.md) | Error event. Raised when the SDK encounters an error. |
 |  [on(registeredEvent, listener)](./voice-react-native-sdk.voice_interface.on_3_methodsignature.md) | Registered event. Raised when the SDK is registered for incoming calls. |
 |  [on(unregisteredEvent, listener)](./voice-react-native-sdk.voice_interface.on_4_methodsignature.md) | Unregistered event. Raised when the SDK is unregistered for incoming calls. |
-|  [on(voiceEvent, listener)](./voice-react-native-sdk.voice_interface.on_5_methodsignature.md) | Generic event listener typings. |
+|  [on(callInviteNotificationTappedEvent, listener)](./voice-react-native-sdk.voice_interface.on_5_methodsignature.md) | Registered event. Raised when the SDK is registered for incoming calls. |
+|  [on(voiceEvent, listener)](./voice-react-native-sdk.voice_interface.on_6_methodsignature.md) |  |
 
