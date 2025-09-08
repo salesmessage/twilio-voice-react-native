@@ -28,6 +28,7 @@ import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CALL_INVITE_INFO
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
+import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION;
 import static com.twiliovoicereactnative.JSEventEmitter.constructJSMap;
 import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.serializeCall;
 import static com.twiliovoicereactnative.ReactNativeArgumentsSerializer.serializeCallException;
@@ -204,10 +205,10 @@ public class VoiceService extends Service {
     Notification notification = NotificationUtility.createIncomingCallNotification(
       VoiceService.this,
       callRecord,
-      VOICE_CHANNEL_HIGH_IMPORTANCE);
+      VoiceApplicationProxy.getMediaPlayerManager().isRingerModeVibrate() ?
+        VOICE_CHANNEL_HIGH_IMPORTANCE_WITH_VIBRATION : VOICE_CHANNEL_HIGH_IMPORTANCE
+    );
     createOrReplaceNotification(callRecord.getNotificationId(), notification);
-
-
 
     // play ringer sound
 //    VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
