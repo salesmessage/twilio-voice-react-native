@@ -1008,6 +1008,8 @@ export interface Voice {
 // @public
 export class Voice extends EventEmitter {
     constructor();
+    // (undocumented)
+    canUseFullScreenIntent(): Promise<boolean>;
     connect(token: string, { contactHandle, notificationDisplayName, params, }?: Voice.ConnectOptions): Promise<Call>;
     getAudioDevices(): Promise<{
         audioDevices: AudioDevice[];

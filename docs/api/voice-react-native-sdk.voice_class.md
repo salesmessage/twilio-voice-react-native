@@ -43,6 +43,7 @@ voice.register(token);
 
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
+|  [canUseFullScreenIntent()](./voice-react-native-sdk.voice_class.canusefullscreenintent_method.md) |  |  |
 |  [connect(token, { contactHandle, notificationDisplayName, params, })](./voice-react-native-sdk.voice_class.connect_method.md) |  | Create an outgoing call. |
 |  [getAudioDevices()](./voice-react-native-sdk.voice_class.getaudiodevices_method.md) |  | Get audio device information from the native layer. |
 |  [getCallInvites()](./voice-react-native-sdk.voice_class.getcallinvites_method.md) |  | Get a list of pending call invites. |
