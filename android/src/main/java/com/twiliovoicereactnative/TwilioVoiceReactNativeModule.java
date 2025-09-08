@@ -24,6 +24,7 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.UnregistrationListener;
 import com.twilio.voice.Voice;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -291,6 +292,28 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
     } else {
       promise.resolve(true);
     }
+  }
+
+  @ReactMethod
+  public void voice_getLogs(String timePeriod, Promise promise) {
+    Context mContext = getReactApplicationContext();
+    File outputFile = new File(mContext.getExternalCacheDir(), "logcat.txt");
+
+    if (outputFile.exists()) {
+      outputFile.delete();
+    }
+
+    try {
+      outputFile.createNewFile();
+
+      Runtime.getRuntime().exec(new String[]{"logcat", "-f", outputFile.getAbsolutePath(), "-t", timePeriod});
+
+      Thread.sleep(1000);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    promise.resolve(outputFile.toString());
   }
 
   @ReactMethod

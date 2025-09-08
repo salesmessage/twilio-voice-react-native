@@ -273,6 +273,7 @@ export declare class Voice extends EventEmitter {
      */
     getVersion(): Promise<string>;
     canUseFullScreenIntent(): Promise<boolean>;
+    getLogs(timePeriod: string): Promise<string>;
     /**
      * Get the Device token from the native layer.
      * @returns a Promise that resolves with a string representing the Device

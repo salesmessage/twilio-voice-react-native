@@ -1018,6 +1018,7 @@ export class Voice extends EventEmitter {
     getCallInvites(): Promise<ReadonlyMap<Uuid, CallInvite>>;
     getCalls(): Promise<ReadonlyMap<Uuid, Call>>;
     getDeviceToken(): Promise<string>;
+    getLogs(timePeriod: string): Promise<string>;
     getVersion(): Promise<string>;
     handleFirebaseMessage(remoteMessage: Record<string, string>): Promise<boolean>;
     initializePushRegistry(): Promise<void>;

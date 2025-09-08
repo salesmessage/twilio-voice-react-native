@@ -49,6 +49,7 @@ voice.register(token);
 |  [getCallInvites()](./voice-react-native-sdk.voice_class.getcallinvites_method.md) |  | Get a list of pending call invites. |
 |  [getCalls()](./voice-react-native-sdk.voice_class.getcalls_method.md) |  | Get a list of existing calls, ongoing and pending. This will not return any call that has finished. |
 |  [getDeviceToken()](./voice-react-native-sdk.voice_class.getdevicetoken_method.md) |  | Get the Device token from the native layer. |
+|  [getLogs(timePeriod)](./voice-react-native-sdk.voice_class.getlogs_method.md) |  |  |
 |  [getVersion()](./voice-react-native-sdk.voice_class.getversion_method.md) |  | Get the version of the native SDK. Note that this is not the version of the React Native SDK, this is the version of the mobile SDK that the RN SDK is utilizing. |
 |  [handleFirebaseMessage(remoteMessage)](./voice-react-native-sdk.voice_class.handlefirebasemessage_method.md) |  | Handle Firebase messages from an out-of-band Firebase messaging service. |
 |  [initializePushRegistry()](./voice-react-native-sdk.voice_class.initializepushregistry_method.md) |  | Initialize a Push Registry instance inside the SDK for handling PushKit device token updates and receiving push notifications. |
