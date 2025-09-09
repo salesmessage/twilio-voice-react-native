@@ -94,6 +94,9 @@ class ReactNativeArgumentsSerializer {
    * @return A serialized CallInvite
    */
   public static WritableMap serializeCallInvite(@NonNull final CallRecord callRecord) {
+    if (callRecord == null || callRecord.getUuid() == null || callRecord.getCallInvite() == null) {
+      return null;
+    }
     // validate input
     final UUID uuid = Objects.requireNonNull(callRecord.getUuid());
     final CallInvite callInvite = Objects.requireNonNull(callRecord.getCallInvite());
