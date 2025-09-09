@@ -256,8 +256,7 @@ public class VoiceService extends Service {
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
-//      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
-      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
+      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().deactivate();
 
       // report an error to JS layer
       sendPermissionsError();
@@ -276,6 +275,7 @@ public class VoiceService extends Service {
 
       // stop ringer sound
       VoiceApplicationProxy.getMediaPlayerManager().stop();
+      VoiceApplicationProxy.getAudioSwitchManager().getAudioSwitch().activate();
 
       // accept call
       AcceptOptions acceptOptions = new AcceptOptions.Builder()
