@@ -21,6 +21,7 @@ import kotlin.Unit;
  * audio devices.
  */
 class AudioSwitchManager {
+  private boolean audioSwitchInProgress = false;
   /**
    * The functional interface of a listener to be bound to the AudioSwitchManager.
    */
@@ -69,6 +70,12 @@ class AudioSwitchManager {
   }
 
   public void start() {
+    if (audioSwitchInProgress) {
+      return;
+    }
+
+    audioSwitchInProgress = true;
+
     audioSwitch.start((devices, selectedDevice) -> {
 
       audioDevices.clear();
@@ -83,12 +90,16 @@ class AudioSwitchManager {
       if (this.listener != null) {
         this.listener.apply(audioDevices, selectedAudioDeviceUuid, selectedDevice);
       }
+
+      audioSwitchInProgress = false;
+
       return Unit.INSTANCE;
     });
   }
 
   public void stop() {
     audioSwitch.stop();
+    audioSwitchInProgress = false;
   }
 
   /**
