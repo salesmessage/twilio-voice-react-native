@@ -1,6 +1,6 @@
 {
   "name": "@twilio/voice-react-native-sdk",
-  "version": "1.6.2-dev",
+  "version": "2.0.0-dev",
   "description": "Twilio Voice React Native SDK",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -19,7 +19,9 @@
     "!ios/build",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "expo-module.config.json",
+    "react-native.config.js"
   ],
   "scripts": {
     "app": "yarn run check && yarn --cwd test/app",
@@ -71,6 +73,7 @@
     "eslint": "^7.2.0",
     "eslint-config-prettier": "^7.0.0",
     "eslint-plugin-prettier": "^3.1.3",
+    "expo-modules-core": "^3.0.21",
     "express": "^4.19.2",
     "husky": "^4.2.5",
     "jest": "^28.1.3",
@@ -82,11 +85,17 @@
     "react-native-builder-bob": "^0.18.0",
     "twilio": "^4.21.0",
     "twilio-release-tool": "^1.0.2",
-    "typescript": "^4.1.3"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
+    "expo": "*",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
   },
   "jest": {
     "preset": "react-native",
@@ -130,6 +139,7 @@
     "node_modules/",
     "lib/",
     "test/app/",
+    "test/expo/",
     "src/error/generated.ts",
     "coverage/"
   ],
@@ -157,5 +167,6 @@
   "dependencies": {
     "@twilio/voice-errors": "1.8.0",
     "eventemitter3": "^4.0.7"
-  }
+  },
+  "packageManager": "yarn@4.12.0"
 }

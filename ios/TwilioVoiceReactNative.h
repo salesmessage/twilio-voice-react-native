@@ -16,6 +16,7 @@
 @class TVOCallInvite;
 @class TVOCancelledCallInvite;
 @class TVODefaultAudioDevice;
+@class TVOPreflightTest;
 
 FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCall;
 FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCallInvite;
@@ -33,8 +34,12 @@ FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCancelledCallI
 
 @property (nonatomic, copy) NSString *accessToken;
 @property (nonatomic, copy) NSDictionary *twimlParams;
-@property (nonatomic, strong) void(^callKitCompletionCallback)(BOOL);
+@property (nonatomic, strong) void(^callKitCompletionCallback)(BOOL, NSError *error);
 @property (nonatomic, strong) RCTPromiseResolveBlock callPromiseResolver;
+
+@property (nonatomic, strong) TVOPreflightTest *preflightTest;
+@property (nonatomic, copy) NSString *preflightTestUuid;
+@property (nonatomic, strong) NSMutableArray *preflightTestEvents;
 
 // Indicates if the disconnect is triggered from app UI, instead of the system Call UI
 @property (nonatomic, assign) BOOL userInitiatedDisconnect;
@@ -42,6 +47,9 @@ FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCancelledCallI
 @property (nonatomic, strong) AVAudioPlayer *ringbackPlayer;
 
 + (TVODefaultAudioDevice *)twilioAudioDevice;
+
+- (NSString *)warningNameWithNumber:(NSNumber *)warning;
+- (NSMutableArray *)callQualityWarningsArrayFromSet:(NSSet<NSNumber *> *)qualityWarnings;
 
 @end
 
@@ -63,12 +71,20 @@ FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCancelledCallI
 - (void)endCallWithUuid:(NSUUID *)uuid;
 /* Initiate the answering from the app UI */
 - (void)answerCallInvite:(NSUUID *)uuid
-              completion:(void(^)(BOOL success))completionHandler;
+              completion:(void(^)(BOOL success, NSError *error))completionHandler;
 - (void)updateCall:(NSString *)uuid callerHandle:(NSString *)handle;
 
 /* Utility */
 - (NSDictionary *)callInfo:(TVOCall *)call;
 - (NSDictionary *)callInviteInfo:(TVOCallInvite *)callInvite;
 - (NSDictionary *)cancelledCallInviteInfo:(TVOCancelledCallInvite *)cancelledCallInvite;
+
+@end
+
+@interface TwilioVoiceReactNative (PromiseAdapter)
+
+- (void)resolvePromise:(RCTPromiseResolveBlock)resolver value:(id)value;
+- (void)rejectPromiseWithCode:(RCTPromiseResolveBlock)resolver code:(NSNumber *)code message:(NSString *)message;
+- (void)rejectPromiseWithName:(RCTPromiseResolveBlock)resolver name:(NSString *)name message:(NSString *)message;
 
 @end

@@ -15,12 +15,15 @@ import { InvalidArgumentError } from './error/InvalidArgumentError';
 import type { TwilioError } from './error/TwilioError';
 import { UnsupportedPlatformError } from './error/UnsupportedPlatformError';
 import { constructTwilioError } from './error/utility';
+import { PreflightTest } from './PreflightTest';
 import type { NativeAudioDeviceInfo } from './type/AudioDevice';
 import type { NativeCallInfo } from './type/Call';
 import type { NativeCallInviteInfo } from './type/CallInvite';
 import type { CallKit } from './type/CallKit';
 import type { CustomParameters, Uuid } from './type/common';
 import type { NativeVoiceEvent, NativeVoiceEventType } from './type/Voice';
+import { validatePreflightOptions } from './utility/preflightTestOptions';
+import { settleNativePromise } from './utility/nativePromise';
 
 /**
  * Defines strict typings for all events emitted by {@link (Voice:class)
@@ -292,25 +295,11 @@ export class Voice extends EventEmitter {
     params: CustomParameters,
     notificationDisplayName: string | undefined
   ) {
-    const connectResult = await NativeModule.voice_connect_android(
-      token,
-      params,
-      notificationDisplayName
-    )
-      .then((callInfo) => {
-        return { type: 'ok', callInfo } as const;
-      })
-      .catch((error) => {
-        const code = error.userInfo.code;
-        const message = error.userInfo.message;
-        return { type: 'err', message, code } as const;
-      });
+    const callInfo = await settleNativePromise(
+      NativeModule.voice_connect_android(token, params, notificationDisplayName)
+    );
 
-    if (connectResult.type === 'err') {
-      throw constructTwilioError(connectResult.message, connectResult.code);
-    }
-
-    return new Call(connectResult.callInfo);
+    return new Call(callInfo);
   }
 
   /**
@@ -323,11 +312,11 @@ export class Voice extends EventEmitter {
   ) {
     const parsedContactHandle =
       contactHandle === '' ? 'Default Contact' : contactHandle;
-    const callInfo = await NativeModule.voice_connect_ios(
-      token,
-      params,
-      parsedContactHandle
+
+    const callInfo = await settleNativePromise(
+      NativeModule.voice_connect_ios(token, params, parsedContactHandle)
     );
+
     return new Call(callInfo);
   }
 
@@ -531,8 +520,9 @@ export class Voice extends EventEmitter {
    * A `Promise` that
    *  - Resolves with a string representing the version of the native SDK.
    */
-  getVersion(): Promise<string> {
-    return NativeModule.voice_getVersion();
+  async getVersion(): Promise<string> {
+    const version = await settleNativePromise(NativeModule.voice_getVersion());
+    return version;
   }
 
   /**
@@ -540,8 +530,11 @@ export class Voice extends EventEmitter {
    * @returns a Promise that resolves with a string representing the Device
    * token.
    */
-  getDeviceToken(): Promise<string> {
-    return NativeModule.voice_getDeviceToken();
+  async getDeviceToken(): Promise<string> {
+    const deviceToken = await settleNativePromise(
+      NativeModule.voice_getDeviceToken()
+    );
+    return deviceToken;
   }
 
   /**
@@ -552,13 +545,15 @@ export class Voice extends EventEmitter {
    *  - Resolves with a mapping of `Uuid`s to {@link (Call:class)}s.
    */
   async getCalls(): Promise<ReadonlyMap<Uuid, Call>> {
-    const callInfos = await NativeModule.voice_getCalls();
+    const callInfos = await settleNativePromise(NativeModule.voice_getCalls());
+
     const callsMap = new Map<Uuid, Call>(
       callInfos.map((callInfo: NativeCallInfo) => [
         callInfo.uuid,
         new Call(callInfo),
       ])
     );
+
     return callsMap;
   }
 
@@ -574,13 +569,17 @@ export class Voice extends EventEmitter {
    *  - Resolves with a mapping of `Uuid`s to {@link (CallInvite:class)}s.
    */
   async getCallInvites(): Promise<ReadonlyMap<Uuid, CallInvite>> {
-    const callInviteInfos = await NativeModule.voice_getCallInvites();
+    const callInviteInfos = await settleNativePromise(
+      NativeModule.voice_getCallInvites()
+    );
+
     const callInvitesMap = new Map<Uuid, CallInvite>(
       callInviteInfos.map((callInviteInfo: NativeCallInviteInfo) => [
         callInviteInfo.uuid,
         new CallInvite(callInviteInfo, CallInvite.State.Pending),
       ])
     );
+
     return callInvitesMap;
   }
 
@@ -606,14 +605,16 @@ export class Voice extends EventEmitter {
   async handleFirebaseMessage(remoteMessage: Record<string, string>) {
     switch (Platform.OS) {
       case 'android':
-        break;
+        const result = await settleNativePromise(
+          NativeModule.voice_handleEvent(remoteMessage)
+        );
+        return result;
       default:
         throw new UnsupportedPlatformError(
-          `Unsupported platform "${Platform.OS}". This method is only supported on Android.`
+          `Unsupported platform "${Platform.OS}". ` +
+            'This method is only supported on Android.'
         );
     }
-
-    return await NativeModule.voice_handleEvent(remoteMessage);
   }
 
   /**
@@ -623,8 +624,8 @@ export class Voice extends EventEmitter {
    * A `Promise` that
    *  - Resolves when the device has been registered.
    */
-  register(token: string): Promise<void> {
-    return NativeModule.voice_register(token);
+  async register(token: string): Promise<void> {
+    await settleNativePromise(NativeModule.voice_register(token));
   }
 
   /**
@@ -634,8 +635,8 @@ export class Voice extends EventEmitter {
    * A `Promise` that
    *  - Resolves when the device has been unregistered.
    */
-  unregister(token: string): Promise<void> {
-    return NativeModule.voice_unregister(token);
+  async unregister(token: string): Promise<void> {
+    await settleNativePromise(NativeModule.voice_unregister(token));
   }
 
   /**
@@ -652,7 +653,7 @@ export class Voice extends EventEmitter {
     const {
       audioDevices: audioDeviceInfos,
       selectedDevice: selectedDeviceInfo,
-    } = await NativeModule.voice_getAudioDevices();
+    } = await settleNativePromise(NativeModule.voice_getAudioDevices());
 
     const audioDevices = audioDeviceInfos.map(
       (audioDeviceInfo: NativeAudioDeviceInfo) =>
@@ -682,8 +683,22 @@ export class Voice extends EventEmitter {
    * A `Promise` that
    *  - Resolves when the AV Route Picker View is shown.
    */
-  showAvRoutePickerView(): Promise<void> {
-    return NativeModule.voice_showNativeAvRoutePicker();
+  async showAvRoutePickerView(): Promise<void> {
+    switch (Platform.OS) {
+      case 'ios':
+        await settleNativePromise(NativeModule.voice_showNativeAvRoutePicker());
+        return;
+      case 'android':
+        // NOTE(mhuynh)
+        // Consider throwing here instead.
+        // VBLOCKS-5784
+        return;
+      default:
+        throw new UnsupportedPlatformError(
+          `Unsupported platform "${Platform.OS}". ` +
+            'This method is only supported on iOS.'
+        );
+    }
   }
 
   /**
@@ -708,10 +723,12 @@ export class Voice extends EventEmitter {
   async initializePushRegistry(): Promise<void> {
     switch (Platform.OS) {
       case 'ios':
-        return NativeModule.voice_initializePushRegistry();
+        await settleNativePromise(NativeModule.voice_initializePushRegistry());
+        return;
       default:
         throw new UnsupportedPlatformError(
-          `Unsupported platform "${Platform.OS}". This method is only supported on iOS.`
+          `Unsupported platform "${Platform.OS}". ` +
+            'This method is only supported on iOS.'
         );
     }
   }
@@ -737,10 +754,14 @@ export class Voice extends EventEmitter {
   ): Promise<void> {
     switch (Platform.OS) {
       case 'ios':
-        return NativeModule.voice_setCallKitConfiguration(configuration);
+        await settleNativePromise(
+          NativeModule.voice_setCallKitConfiguration(configuration)
+        );
+        return;
       default:
         throw new UnsupportedPlatformError(
-          `Unsupported platform "${Platform.OS}". This method is only supported on iOS.`
+          `Unsupported platform "${Platform.OS}". ` +
+            'This method is only supported on iOS.'
         );
     }
   }
@@ -782,59 +803,90 @@ export class Voice extends EventEmitter {
   }
 
   /**
-   * Returns a boolean representing whether or not Android Full Screen
-   * notifications are enabled.
+   * Starts a PreflightTest.
    *
-   * @remarks
-   * Unsupported platforms:
-   *   - iOS
+   * The PreflightTest allows you to anticipate and troubleshoot end users'
+   * connectivity and bandwidth issues before or during Twilio Voice calls.
+   *
+   * The PreflightTest performs a test call to Twilio and provides a
+   * {@link (PreflightTest:namespace).Report} at the end. The report includes
+   * information about the end user's network connection (including jitter,
+   * packet loss, and round trip time) and connection settings.
+   *
+   * @example
+   * ```typescript
+   * import {
+   *   AudioCodecType,
+   *   IceTransportPolicy,
+   *   PreflightTest,
+   *   Voice,
+   * } from '@twilio/voice-react-native-sdk';
+   *
+   * const voice = new Voice();
+   *
+   * const preflightOptions = {
+   *   iceServers: [{
+   *     username: 'foo',
+   *     password: 'bar',
+   *     serverUrl: 'biffbazz',
+   *   }],
+   *   iceTransportPolicy: IceTransportPolicy.All,
+   *   preferredAudioCodecs: [{
+   *     type: AudioCodecType.Opus,
+   *     maxAverageBitrage: 128000,
+   *   }],
+   * };
+   *
+   * const token = '...';
+   *
+   * const preflightTest = await voice.runPreflight(token, preflightOptions);
+   *
+   * preflightTest.on(PreflightTest.Event.Completed, (report) => {
+   *   // handle the completed event and update your application ui to
+   *   // show report results and reveal any potential issues
+   * });
+   *
+   * preflightTest.on(PreflightTest.Event.Connected, () => {
+   *   // handle the connected event and update your application ui to
+   *   // show that the preflight test has started
+   * });
+   *
+   * preflightTest.on(PreflightTest.Event.Failed, (error) => {
+   *   // handle the failed event and update your application ui to
+   *   // show the error
+   * });
+   *
+   * preflightTest.on(PreflightTest.Event.QualityWarning, (currentWarnings, previousWarnings) => {
+   *   // handle the quality warning event and update your application ui
+   *   // show the warning or the warning cleared
+   * });
+   *
+   * preflightTest.on(PreflightTest.Event.Sample, (sample) => {
+   *   // handle the sample event and update your application ui
+   *   // show the progress
+   * });
+   * ```
    *
    * @returns
-   * A `Promise` that
-   * - Resolves `false` if either of the following is true:
-   *   - Full Screen Notifications are disabled in your app's configuration.
-   *     See `docs/disable-full-screen-notifications.md` for more info.
-   *   - The app was not granted Full Screen Notification permissions by the
-   *     operating system.
-   * - Resolves `true` if none of the above is true.
-   * - Rejects if the Android layer encountered an error.
+   * A Promise that:
+   * - Resolves with a {@link (PreflightTest:class)} object.
+   * - Rejects with a {@link TwilioErrors} if unable to perform a
+   *   {@link (PreflightTest:class)}.
    */
-  async isFullScreenNotificationEnabled(): Promise<boolean> {
-    switch (Platform.OS) {
-      case 'ios': {
-        throw new UnsupportedPlatformError(
-          `Unsupported platform "${Platform.OS}". This method is only supported on Android.`
-        );
-      }
+  async runPreflight(
+    accessToken: string,
+    options: PreflightTest.Options = {}
+  ): Promise<PreflightTest> {
+    const optionValidationResult = validatePreflightOptions(options);
+    if (optionValidationResult.status === 'error') {
+      throw optionValidationResult.error;
     }
 
-    return NativeModule.system_isFullScreenNotificationEnabled();
-  }
+    const preflightTestUuid = await settleNativePromise(
+      NativeModule.voice_runPreflight(accessToken, options)
+    );
 
-  /**
-   * Opens the Android System Settings app to attempt to request Full Screen
-   * Notification permissions.
-   *
-   * @remarks
-   * Unsupported platforms:
-   * - iOS
-   *
-   * @returns
-   * A `Promise` that
-   * - Resolves `void` if the Android System Settings app was opened.
-   * - Rejects if the Android system encountered an error while trying to open
-   *   the System Settings app.
-   */
-  async requestFullScreenNotificationPermission(): Promise<void> {
-    switch (Platform.OS) {
-      case 'ios': {
-        throw new UnsupportedPlatformError(
-          `Unsupported platform "${Platform.OS}". This method is only supported on Android.`
-        );
-      }
-    }
-
-    return NativeModule.system_requestFullScreenNotificationPermission();
+    return new PreflightTest(preflightTestUuid);
   }
 }
 

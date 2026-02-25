@@ -3,7 +3,10 @@ import {
   createNativeCallInviteInfo,
   createMockNativeCallInviteEvents,
 } from '../__mocks__/CallInvite';
-import type { NativeEventEmitter as MockNativeEventEmitterType } from '../__mocks__/common';
+import {
+  mockNativePromiseRejectionWithCodeValue,
+  NativeEventEmitter as MockNativeEventEmitterType,
+} from '../__mocks__/common';
 import { Call } from '../Call';
 import { CallInvite } from '../CallInvite';
 import { IncomingCallMessage } from '../CallMessage/IncomingCallMessage';
@@ -293,12 +296,14 @@ describe('CallInvite class', () => {
         CallInvite.State.Pending
       );
 
-      jest.mocked(NativeModule.callInvite_accept).mockRejectedValueOnce({
-        userInfo: {
-          code: 31401,
-          message: 'Missing permissions.',
-        },
-      });
+      const errorPayload = mockNativePromiseRejectionWithCodeValue(
+        31401,
+        'Missing permissions.'
+      );
+
+      jest
+        .mocked(NativeModule.callInvite_accept)
+        .mockResolvedValueOnce(errorPayload);
 
       expect.assertions(1);
       await callPromise.accept(acceptOptions).catch((error) => {
@@ -566,6 +571,42 @@ describe('CallInvite class', () => {
         const [[processedContent]] = MockOutgoingCallMessage.mock.calls;
         expect(processedContent.content).toStrictEqual(JSON.stringify(content));
       });
+    });
+
+    it('invokes callInvite_sendMessage on android', async () => {
+      jest.spyOn(Platform, 'OS', 'get').mockReturnValueOnce('android');
+
+      await new CallInvite(
+        createNativeCallInviteInfo(),
+        CallInvite.State.Pending
+      ).sendMessage({
+        content: 'foo',
+        contentType,
+        messageType,
+      });
+
+      expect(
+        jest.mocked(MockNativeModule.callInvite_sendMessage).mock.calls
+      ).toEqual([
+        ['mock-nativecallinviteinfo-uuid', 'foo', contentType, messageType],
+      ]);
+    });
+
+    it('invokes call_sendMessage on ios', async () => {
+      jest.spyOn(Platform, 'OS', 'get').mockReturnValueOnce('ios');
+
+      await new CallInvite(
+        createNativeCallInviteInfo(),
+        CallInvite.State.Pending
+      ).sendMessage({
+        content: 'foo',
+        contentType,
+        messageType,
+      });
+
+      expect(jest.mocked(MockNativeModule.call_sendMessage).mock.calls).toEqual(
+        [['mock-nativecallinviteinfo-uuid', 'foo', contentType, messageType]]
+      );
     });
   });
 

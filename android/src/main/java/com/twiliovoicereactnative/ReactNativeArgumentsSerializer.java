@@ -16,8 +16,6 @@ import static com.twiliovoicereactnative.CommonConstants.CallInfoIsOnHold;
 import static com.twiliovoicereactnative.CommonConstants.CallMessageContent;
 import static com.twiliovoicereactnative.CommonConstants.CallMessageContentType;
 import static com.twiliovoicereactnative.CommonConstants.CallMessageMessageType;
-import static com.twiliovoicereactnative.CommonConstants.ScopeVoice;
-import static com.twiliovoicereactnative.CommonConstants.VoiceEventError;
 import static com.twiliovoicereactnative.CommonConstants.VoiceEventSid;
 import static com.twiliovoicereactnative.CommonConstants.CallStateConnected;
 import static com.twiliovoicereactnative.CommonConstants.CallStateConnecting;
@@ -34,7 +32,6 @@ import static com.twiliovoicereactnative.CommonConstants.CancelledCallInviteInfo
 import static com.twiliovoicereactnative.CommonConstants.CancelledCallInviteInfoTo;
 import static com.twiliovoicereactnative.CommonConstants.VoiceErrorKeyCode;
 import static com.twiliovoicereactnative.CommonConstants.VoiceErrorKeyMessage;
-import static com.twiliovoicereactnative.CommonConstants.VoiceEventType;
 import static com.twiliovoicereactnative.JSEventEmitter.constructJSMap;
 
 import java.text.SimpleDateFormat;
@@ -69,6 +66,7 @@ import java.util.UUID;
  */
 class ReactNativeArgumentsSerializer {
   private static final SDKLog logger = new SDKLog(ReactNativeArgumentsSerializer.class);
+
   /**
    * Serializes the custom parameters of a CallInvite.
    * @param callInvite A CallInvite object
@@ -90,7 +88,7 @@ class ReactNativeArgumentsSerializer {
 
   /**
    * Serializes a CallInvite.
-   * @param CallRecord the callRecord
+   * @param callRecord the callRecord
    * @return A serialized CallInvite
    */
   public static WritableMap serializeCallInvite(@NonNull final CallRecord callRecord) {
@@ -109,7 +107,7 @@ class ReactNativeArgumentsSerializer {
 
   /**
    * Serializes a CancelledCallInvite.
-   * @param CallRecord The callRecord
+   * @param callRecord The callRecord
    * @return A serialized CancelledCallInvite
    */
   public static WritableMap serializeCancelledCallInvite(@NonNull final CallRecord callRecord) {
@@ -148,7 +146,7 @@ class ReactNativeArgumentsSerializer {
 
   /**
    * Serializes a Call.
-   * @param CallRecord the call record
+   * @param callRecord the call record
    * @return A serialized Call
    */
   public static WritableMap serializeCall(@NonNull final CallRecord callRecord) {
@@ -222,6 +220,7 @@ class ReactNativeArgumentsSerializer {
       new Pair<>(AudioDeviceKeyAudioDevices, serializeAudioDeviceMapIntoArray(audioDevices)),
       new Pair<>(AudioDeviceKeySelectedDevice, serializeAudioDevice(selectedAudioDeviceUuid, selectedAudioDevice)));
   }
+
   public static WritableMap serializeVoiceException(VoiceException exception) {
     if (null != exception) {
       return constructJSMap(
@@ -230,6 +229,7 @@ class ReactNativeArgumentsSerializer {
     }
     return null;
   }
+
   public static WritableMap serializeCallException(@NonNull final CallRecord callRecord) {
     return (null != callRecord.getCallException())
       ? serializeVoiceException(callRecord.getCallException())
@@ -246,6 +246,36 @@ class ReactNativeArgumentsSerializer {
     return null;
   }
 
+  public static WritableMap serializePromiseResolution(Object resolutionValue) {
+    return constructJSMap(
+      new Pair<>(CommonConstants.PromiseKeyStatus, CommonConstants.PromiseStatusValueResolved),
+      new Pair<>(CommonConstants.PromiseKeyValue, resolutionValue)
+    );
+  }
+
+  /**
+   * Coded errors are errors related to a backend error code.
+   */
+  public static WritableMap serializePromiseErrorWithCode(int code, String message) {
+    return constructJSMap(
+      new Pair<>(CommonConstants.PromiseKeyStatus, CommonConstants.PromiseStatusValueRejectedWithCode),
+      new Pair<>(CommonConstants.PromiseKeyErrorCode, code),
+      new Pair<>(CommonConstants.PromiseKeyErrorMessage, message)
+    );
+  }
+
+  /**
+   * Named errors are SDK-only errors that are not related to a backend error code.
+   * For example, InvalidStateError and InvalidArgumentError.
+   */
+  public static WritableMap serializePromiseErrorWithName(String name, String message) {
+    return constructJSMap(
+      new Pair<>(CommonConstants.PromiseKeyStatus, CommonConstants.PromiseStatusValueRejectedWithName),
+      new Pair<>(CommonConstants.PromiseKeyErrorName, name),
+      new Pair<>(CommonConstants.PromiseKeyErrorMessage, message)
+    );
+  }
+
   public static WritableArray serializeCallQualityWarnings(@NonNull Set<Call.CallQualityWarning> warnings) {
     WritableArray previousWarningsArray = Arguments.createArray();
     for (Call.CallQualityWarning warning : warnings) {
@@ -256,7 +286,7 @@ class ReactNativeArgumentsSerializer {
 
   /**
    * Serializes a Call Message
-   * @param CallMessage the call message
+   * @param callMessage the call message
    * @return A serialized Call
    */
   public static WritableMap serializeCallMessage(@NonNull final CallMessage callMessage) {

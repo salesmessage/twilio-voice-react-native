@@ -29,12 +29,12 @@ parameters:
 executors:
   default:
     docker:
-      - image: cimg/node:18.19
+      - image: cimg/node:22.21
     working_directory: ~/project
   ios-executor:
     macos:
-      xcode: 16.2.0
-      resource_class: macos.m1.medium.gen1
+      xcode: 26.2.0
+    resource_class: m4pro.medium
 
 ###
 # Commands
@@ -45,16 +45,23 @@ commands:
       - attach_workspace:
           at: ~/project
 
+  enable-corepack:
+    steps:
+      - run:
+          name: Enable corepack
+          command: |
+            sudo corepack enable
+
   install-dependencies:
     steps:
       - run:
           name: Install dependencies
           command: |
-            yarn run build:constants
-            cd test/TwilioVoiceExampleNewArch && npm ci && cd ../..
-            yarn install --cwd test/app --frozen-lockfile
             yarn install --frozen-lockfile
+            yarn run build:constants
             yarn run build:errors
+            yarn --cwd test/app install --frozen-lockfile
+            yarn --cwd test/expo install --frozen-lockfile
 
   setup-pods:
     description: Setup pods used for ios builds
@@ -63,12 +70,6 @@ commands:
           name: "Install Cocoapods 1.11.3"
           command: |
             sudo gem install cocoapods -v 1.11.3
-      - run:
-          name: Install cocoapods if cache does not exist
-          command: |
-            cd test/app/ios
-            pod install
-            cd ../../..
 
   simulator-dependencies:
     description: "Install iOS simulator dependencies"
@@ -94,7 +95,8 @@ commands:
       - run:
           name: "Generate access token"
           command: |
-            node test/scripts/gen-token.mjs $CLIENT_IDENTITY test/app/src/e2e-tests-token.ts
+            node test/scripts/gen-token.mjs $CLIENT_IDENTITY call test/expo/constants/e2e-tests-token.ts
+            node test/scripts/gen-token.mjs $CLIENT_IDENTITY preflightTest test/expo/constants/e2e-preflightTest-token.ts
 
   clear-detox-cache:
     description: "Clears detox framework cache"
@@ -118,7 +120,7 @@ commands:
       - run:
           name: Detox Build
           command: |
-            cd test/app
+            cd test/expo
             yarn detox:build -c <<parameters.configuration>>
             cd ../..
           no_output_timeout: 20m
@@ -147,7 +149,7 @@ commands:
       - run:
           name: Detox Test
           command: |
-            cd test/app
+            cd test/expo
             yarn detox:test -c <<parameters.configuration>> -l <<parameters.loglevel>> -a=<<parameters.artifacts>> --take-screenshots=<<parameters.screenshots>> --ci --forceExit --detectOpenHandles
             cd ../..
 
@@ -160,6 +162,7 @@ jobs:
     steps:
       - checkout
       - attach_project
+      - enable-corepack
       - restore_cache:
           keys:
             - dependencies-{{ checksum "package.json" }}
@@ -168,6 +171,10 @@ jobs:
           keys:
             - dependencies-test-application-{{ checksum "test/app/package.json" }}
             - dependencies-test-application-
+      - restore_cache:
+          keys:
+            - dependencies-test-expo-application-{{ checksum "test/expo/package.json" }}
+            - dependencies-test-expo-application-
       - install-dependencies
       - save_cache:
           key: dependencies-{{ checksum "package.json" }}
@@ -175,6 +182,9 @@ jobs:
       - save_cache:
           key: dependencies-test-application-{{ checksum "test/app/package.json" }}
           paths: test/app/node_modules
+      - save_cache:
+          key: dependencies-test-expo-application-{{ checksum "test/expo/package.json" }}
+          paths: test/expo/node_modules
       - persist_to_workspace:
           root: .
           paths: .
@@ -183,6 +193,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Lint files
           command: |
@@ -192,6 +203,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Typecheck files
           command: |
@@ -201,6 +213,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Run unit tests
           command: |
@@ -213,6 +226,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Build package
           command: |
@@ -222,6 +236,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Build docs and check for API changes
           command: |
@@ -232,6 +247,7 @@ jobs:
     executor: default
     steps:
       - attach_project
+      - enable-corepack
       - run:
           name: Build errors and check for changes
           command: |
@@ -247,6 +263,7 @@ jobs:
         default: true
     steps:
       - checkout
+      - enable-corepack
       - install-dependencies
       - when:
           condition: << parameters.dry-run >>
@@ -268,25 +285,46 @@ jobs:
         type: string
     steps:
       - checkout
+      - enable-corepack
       - install-dependencies
       - generate-client-identity
       - setup-e2e-creds
       - setup-pods
       - simulator-dependencies
+      - run:
+          name: "Save Google Services"
+          command: |
+            cd test/expo
+            echo $GOOGLE_SERVICES_JSON > google-services.json
+            cd ../..
+      - run:
+          name: "Save Expo test app secrets"
+          command: |
+            cd test/expo
+            echo $EXPO_TEST_APP_SECRETS_JSON | base64 -d > secrets.json
+            cd ../..
+      - run:
+          name: "Prebuild iOS native folder"
+          command: |
+            cd test/expo
+            yarn run expo prebuild --clean --platform=ios
+            cd ../..
       # run E2E tests
       - detox-build:
           configuration: <<parameters.detox_configuration>>
       - detox-test:
           configuration: <<parameters.detox_configuration>>
-          artifacts: <<parameters.artifacts_location>>
+          artifacts: ./detox_artifacts
+          screenshots: all
       - store_artifacts:
-          path: ./test/app/test-report.html
+          when: always
+          path: ./test/expo/detox_artifacts
 
   e2e-android:
     executor:
       name: android/android-machine
-      resource-class: large
-      tag: 2024.04.1
+      resource-class: xlarge
+      tag: 2025.10.1
     parameters:
       detox_configuration:
         type: string
@@ -294,6 +332,10 @@ jobs:
       - android/change-java-version:
           java-version: 17
       - checkout
+      - run:
+          name: Enable corepack (without sudo)
+          command: |
+            corepack enable
       - install-dependencies
       - generate-client-identity
       - setup-e2e-creds
@@ -311,15 +353,28 @@ jobs:
       - run:
           name: "Save Google Services"
           command: |
-            cd test/app/android/app
+            cd test/expo
             echo $GOOGLE_SERVICES_JSON > google-services.json
-            cd ../../../..
+            cd ../..
+      - run:
+          name: "Save Expo test app secrets"
+          command: |
+            cd test/expo
+            echo $EXPO_TEST_APP_SECRETS_JSON | base64 -d > secrets.json
+            cd ../..
       - run:
           name: "Start relay server"
           background: true
           command: |
-            cd test/app
+            cd test/expo
             yarn run detox:relay-server
+            cd ../..
+      - run:
+          name: "Prebuild Android native folder"
+          command: |
+            cd test/expo
+            yarn run expo prebuild --clean --platform=android
+            bash detox/scripts/patch-all.bash
             cd ../..
       - detox-build:
           configuration: <<parameters.detox_configuration>>
@@ -331,12 +386,12 @@ jobs:
           name: "Save Android logs"
           when: always
           command: |
-            cd test/app
+            cd test/expo
             adb logcat -d > ./detox_artifacts/logcat.txt
             cd ../..
       - store_artifacts:
           when: always
-          path: ./test/app/detox_artifacts
+          path: ./test/expo/detox_artifacts
 
   trigger-qe-tests:
     executor:
@@ -448,4 +503,4 @@ workflows:
     jobs:
       - trigger-qe-tests:
           context: sdks-qe
-          name: Test QE Regression Tests Trigger   
+          name: Test QE Regression Tests Trigger
