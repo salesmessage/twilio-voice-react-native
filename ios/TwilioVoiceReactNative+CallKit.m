@@ -204,7 +204,8 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
 - (void)performAnswerVoiceCallWithUUID:(NSUUID *)uuid
                             completion:(void(^)(BOOL success))completionHandler {
     NSAssert(self.callInviteMap[uuid.UUIDString], @"No call invite");
-    
+
+  @try {
     TVOCallInvite *callInvite = self.callInviteMap[uuid.UUIDString];
     TVOAcceptOptions *acceptOptions = [TVOAcceptOptions optionsWithCallInvite:callInvite block:^(TVOAcceptOptionsBuilder *builder) {
         builder.uuid = uuid;
@@ -224,6 +225,12 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
                          kTwilioVoiceReactNativeCallInviteEventKeyType: kTwilioVoiceReactNativeCallInviteEventTypeValueAccepted,
                          kTwilioVoiceReactNativeCallInviteEventKeyCallSid: callInvite.callSid,
                          kTwilioVoiceReactNativeEventKeyCallInvite: [self callInviteInfo:callInvite]}];
+  } @catch (NSException *exception) {
+      [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                      body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                          kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @31500,
+                          kTwilioVoiceReactNativeVoiceErrorKeyMessage: exception.description}}];
+  }
 }
 
 - (void)updateCall:(NSString *)uuid callerHandle:(NSString *)handle {
