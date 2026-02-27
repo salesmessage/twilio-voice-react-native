@@ -8,6 +8,7 @@ export declare enum Constants {
     'ScopePreflightTest' = "scopePreflightTest",
     'VoiceEventError' = "voiceEventError",
     'VoiceEventType' = "type",
+    'VoiceEventMissedCallNotificationTapped' = "voiceEventMissedCallNotificationTapped",
     'VoiceErrorKeyError' = "error",
     'VoiceErrorKeyCode' = "code",
     'VoiceErrorKeyMessage' = "message",

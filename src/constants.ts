@@ -14,6 +14,7 @@ export enum Constants {
   // Common
   'VoiceEventError' = 'voiceEventError',
   'VoiceEventType' = 'type',
+  'VoiceEventMissedCallNotificationTapped' = 'voiceEventMissedCallNotificationTapped',
 
   // Error
   'VoiceErrorKeyError' = 'error',
