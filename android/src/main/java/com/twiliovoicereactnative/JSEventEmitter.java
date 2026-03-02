@@ -24,6 +24,11 @@ class JSEventEmitter {
   }
   public void sendEvent(String eventName, @Nullable WritableMap params) {
     logger.debug("sendEvent " + eventName + " params " + params);
+    if (context == null) {
+      logger.warning( "attempt to sendEvent without context");
+      return;
+    }
+
     if ((null != context.get()) &&
         context.get().hasActiveReactInstance()) {
       context.get()
