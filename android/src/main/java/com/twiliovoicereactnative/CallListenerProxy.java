@@ -101,7 +101,12 @@ class CallListenerProxy implements Call.Listener {
     debug("onConnected");
 
     // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = getCallRecordDatabase().get(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onConnected: CallRecord not found for UUID, ignoring event");
+      return;
+    }
+
     callRecord.setCall(call);
     callRecord.setTimestamp(new Date());
     getMediaPlayerManager().stop();
