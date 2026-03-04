@@ -53,6 +53,7 @@ import com.twilio.voice.Call;
 import com.twilio.voice.CallInvite;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -197,7 +198,8 @@ class ReactNativeArgumentsSerializer {
   public static WritableArray serializeAudioDeviceMapIntoArray(Map<String, AudioDevice> audioDevices) {
     WritableArray audioDeviceInfoArray = Arguments.createArray();
 
-    for (Entry<String, AudioDevice> entry : audioDevices.entrySet()) {
+    Map<String, AudioDevice> snapshot = new HashMap<>(audioDevices);
+    for (Entry<String, AudioDevice> entry : snapshot.entrySet()) {
       String uuid = entry.getKey();
       AudioDevice audioDevice = entry.getValue();
 
