@@ -8,6 +8,7 @@ import com.twilio.audioswitch.AudioSwitch;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.twiliovoicereactnative.CommonConstants.AudioDeviceKeyEarpiece;
 import static com.twiliovoicereactnative.CommonConstants.AudioDeviceKeySpeaker;
@@ -46,8 +47,9 @@ class AudioSwitchManager {
 
   /**
    * Map of UUIDs to all available AudioDevices. Kept up-to-date by the AudioSwitch.
+   * Uses ConcurrentHashMap to prevent ConcurrentModificationException when accessed from multiple threads.
    */
-  private final HashMap<String, AudioDevice> audioDevices;
+  private final ConcurrentHashMap<String, AudioDevice> audioDevices;
   /**
    * The AudioSwitch.
    */
@@ -66,7 +68,7 @@ class AudioSwitchManager {
    * @param context The Android application context
    */
   public AudioSwitchManager(Context context) {
-    audioDevices = new HashMap<>();
+    audioDevices = new ConcurrentHashMap<>();
     audioSwitch = new AudioSwitch(context);
   }
 
@@ -89,7 +91,7 @@ class AudioSwitchManager {
       }
 
       if (this.listener != null) {
-        this.listener.apply(audioDevices, selectedAudioDeviceUuid, selectedDevice);
+        this.listener.apply(new HashMap<>(audioDevices), selectedAudioDeviceUuid, selectedDevice);
       }
 
       audioSwitchInProgress = false;
@@ -112,7 +114,7 @@ class AudioSwitchManager {
   public AudioSwitchManager setListener(AudioManagerListener listener) {
     this.listener = listener;
 
-    this.listener.apply(audioDevices, selectedAudioDeviceUuid, getSelectedAudioDevice());
+    this.listener.apply(new HashMap<>(audioDevices), selectedAudioDeviceUuid, getSelectedAudioDevice());
 
     return this;
   }
@@ -131,7 +133,7 @@ class AudioSwitchManager {
    * Get the audio devices.
    * @return A map of UUIDs to available audio devices
    */
-  public HashMap<String, AudioDevice> getAudioDevices() {
+  public Map<String, AudioDevice> getAudioDevices() {
     return audioDevices;
   }
 

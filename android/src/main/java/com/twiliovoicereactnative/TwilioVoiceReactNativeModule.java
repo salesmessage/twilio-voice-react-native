@@ -403,7 +403,7 @@ public class TwilioVoiceReactNativeModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void voice_getAudioDevices(Promise promise) {
-    Map<String, AudioDevice> audioDevices = audioSwitchManager.getAudioDevices();
+    Map<String, AudioDevice> audioDevices = new HashMap<>(audioSwitchManager.getAudioDevices());
     String selectedAudioDeviceUuid = audioSwitchManager.getSelectedAudioDeviceUuid();
     AudioDevice selectedAudioDevice = audioSwitchManager.getSelectedAudioDevice();
 
