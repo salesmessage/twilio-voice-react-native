@@ -56,16 +56,19 @@ class CallListenerProxy implements Call.Listener {
     // stop sound and routing
     getMediaPlayerManager().stop();
     getAudioSwitchManager().getAudioSwitch().deactivate();
-
-    // find call record & remove
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
-
-    // take down notification
-    getVoiceServiceApi().cancelActiveCallNotification(callRecord);
-
     if (proximityManager != null) {
       proximityManager.stopProximitySensor();
     }
+
+    // find call record & remove
+    CallRecord callRecord = getCallRecordDatabase().remove(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onConnectFailure: CallRecord not found for UUID, ignoring event");
+      return;
+    }
+
+    // take down notification
+    getVoiceServiceApi().cancelActiveCallNotification(callRecord);
 
     // serialize and notify JS
     sendJSEvent(
@@ -80,7 +83,11 @@ class CallListenerProxy implements Call.Listener {
     debug("onRinging");
 
     // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = getCallRecordDatabase().get(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onRinging: CallRecord not found for UUID, ignoring event");
+      return;
+    }
     callRecord.setCall(call);
 
     // create notification & sound
@@ -127,7 +134,11 @@ class CallListenerProxy implements Call.Listener {
     debug("onReconnecting");
 
     // find & update call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = getCallRecordDatabase().get(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onReconnecting: CallRecord not found for UUID, ignoring event");
+      return;
+    }
 
     // notify JS layer
     sendJSEvent(
@@ -142,7 +153,11 @@ class CallListenerProxy implements Call.Listener {
     debug("onReconnected");
 
     // find & update call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = getCallRecordDatabase().get(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onReconnected: CallRecord not found for UUID, ignoring event");
+      return;
+    }
 
     // notify JS layer
     sendJSEvent(
@@ -155,18 +170,24 @@ class CallListenerProxy implements Call.Listener {
   public void onDisconnected(@NonNull Call call, @Nullable CallException callException) {
     debug("onDisconnected");
 
-    // find & remove call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().remove(new CallRecord(uuid)));
-
-    // stop audio & cancel notification
-    getMediaPlayerManager().stop();
-//    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
-//    getAudioSwitchManager().getAudioSwitch().deactivate();
-    getVoiceServiceApi().cancelActiveCallNotification(callRecord);
-
     if (proximityManager != null) {
       proximityManager.stopProximitySensor();
     }
+
+    // stop audio
+    getMediaPlayerManager().stop();
+//    getMediaPlayerManager().play(MediaPlayerManager.SoundTable.DISCONNECT);
+//    getAudioSwitchManager().getAudioSwitch().deactivate();
+
+    // find & remove call record
+    CallRecord callRecord = getCallRecordDatabase().remove(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onDisconnected: CallRecord not found for UUID, ignoring event");
+      return;
+    }
+
+    // cancel notification
+    getVoiceServiceApi().cancelActiveCallNotification(callRecord);
 
     // notify JS layer
     sendJSEvent(
@@ -183,7 +204,11 @@ class CallListenerProxy implements Call.Listener {
     debug("onCallQualityWarningsChanged");
 
     // find call record
-    CallRecord callRecord = Objects.requireNonNull(getCallRecordDatabase().get(new CallRecord(uuid)));
+    CallRecord callRecord = getCallRecordDatabase().get(new CallRecord(uuid));
+    if (callRecord == null) {
+      debug("onCallQualityWarningsChanged: CallRecord not found for UUID, ignoring event");
+      return;
+    }
 
     // notify JS layer
     sendJSEvent(
