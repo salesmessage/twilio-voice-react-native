@@ -200,6 +200,15 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
 - (void)performVoiceCallWithUUID:(NSUUID *)uuid
                           client:(NSString *)client
                       completion:(void(^)(BOOL success))completionHandler {
+    if (!self.accessToken || self.accessToken.length == 0) {
+        NSLog(@"[TwilioVoiceReactNative] performVoiceCallWithUUID: accessToken is not set, aborting connect");
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                        body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                            kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @20101,
+                            kTwilioVoiceReactNativeVoiceErrorKeyMessage: @"Access token is not set. Cannot connect the call."}}];
+        completionHandler(NO);
+        return;
+    }
     TVOConnectOptions *connectOptions = [TVOConnectOptions optionsWithAccessToken:self.accessToken block:^(TVOConnectOptionsBuilder *builder) {
         builder.params = self.twimlParams;
         builder.uuid = uuid;
