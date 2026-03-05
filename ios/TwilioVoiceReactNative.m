@@ -640,21 +640,47 @@ RCT_EXPORT_METHOD(voice_selectAudioDevice:(NSString *)uuid
 RCT_EXPORT_METHOD(voice_showNativeAvRoutePicker:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    TVRNAVRoutePickerView *routePicker = [[TVRNAVRoutePickerView alloc] initWithFrame:CGRectZero];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self availableAudioDevices];
 
-    UIWindow *window = [UIApplication sharedApplication].windows[0];
-    UIViewController *rootViewController = window.rootViewController;
-    if (rootViewController) {
-        UIViewController *topViewController = rootViewController;
-        while (topViewController.presentedViewController) {
-            topViewController = topViewController.presentedViewController;
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                                message:nil
+                                                                         preferredStyle:UIAlertControllerStyleActionSheet];
+
+        NSString *selectedUuid = self.selectedAudioDevice[kTwilioVoiceReactNativeAudioDeviceKeyUuid];
+
+        for (NSString *key in [self.audioDevices allKeys]) {
+            NSDictionary *device = self.audioDevices[key];
+            NSString *deviceName = device[kTwilioVoiceReactNativeAudioDeviceKeyName];
+            NSString *deviceUuid = device[kTwilioVoiceReactNativeAudioDeviceKeyUuid];
+            BOOL isSelected = [selectedUuid isEqualToString:deviceUuid];
+
+            NSString *title = isSelected ? [NSString stringWithFormat:@"✓ %@", deviceName] : [NSString stringWithFormat:@"   %@", deviceName];
+
+            UIAlertAction *action = [UIAlertAction actionWithTitle:title
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction * _Nonnull action) {
+                [self selectAudioDevice:deviceUuid];
+            }];
+
+            [alertController addAction:action];
         }
 
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [topViewController.view addSubview:routePicker];
-            [routePicker present];
-        });
-    }
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:nil];
+        [alertController addAction:cancelAction];
+
+        UIWindow *window = [UIApplication sharedApplication].windows[0];
+        UIViewController *rootViewController = window.rootViewController;
+        if (rootViewController) {
+            UIViewController *topViewController = rootViewController;
+            while (topViewController.presentedViewController) {
+                topViewController = topViewController.presentedViewController;
+            }
+            [topViewController presentViewController:alertController animated:YES completion:nil];
+        }
+    });
 
     resolve(nil);
 }
