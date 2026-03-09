@@ -8,6 +8,8 @@
 @import CallKit;
 @import TwilioVoice;
 
+#import <MediaPlayer/MediaPlayer.h>
+
 #import "TwilioVoiceReactNative.h"
 #import "TwilioVoiceReactNativeConstants.h"
 
@@ -453,6 +455,23 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
     
     [self stopRingback];
     self.userInitiatedDisconnect = NO;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nil;
+
+        for (UIWindow *window in [UIApplication sharedApplication].windows) {
+            UIViewController *rootVC = window.rootViewController;
+            if (!rootVC) continue;
+
+            UIViewController *topVC = rootVC;
+            while (topVC.presentedViewController) {
+                topVC = topVC.presentedViewController;
+            }
+            if (topVC != rootVC) {
+                [topVC dismissViewControllerAnimated:YES completion:nil];
+            }
+        }
+    });
 }
 
 - (void)call:(TVOCall *)call isReconnectingWithError:(NSError *)error {

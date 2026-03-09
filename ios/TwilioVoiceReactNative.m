@@ -7,6 +7,8 @@
 
 @import AVKit;
 
+#import <MediaPlayer/MediaPlayer.h>
+
 #import "TwilioVoicePushRegistry.h"
 #import "TwilioVoiceReactNative.h"
 #import "TwilioVoiceReactNativeConstants.h"
@@ -144,6 +146,7 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 
 - (void)handleRouteChange:(NSNotification *)notification {
     [self availableAudioDevices];
+    [self updateNowPlayingArtwork];
 
     NSMutableArray *nativeAudioDeviceInfos = [NSMutableArray array];
     for (NSString *key in [self.audioDevices allKeys]) {
@@ -160,6 +163,78 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
     }
 
     [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice body:eventBody];
+}
+
+- (UIImage *)bluetoothIconWithSize:(CGSize)size {
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+
+    [[UIColor labelColor] setStroke];
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    path.lineWidth = 3.0;
+    path.lineCapStyle = kCGLineCapRound;
+    path.lineJoinStyle = kCGLineJoinRound;
+
+    CGFloat cx = size.width / 2;
+    CGFloat top = size.height * 0.18;
+    CGFloat bottom = size.height * 0.82;
+    CGFloat mid = size.height / 2;
+    CGFloat halfWidth = size.width * 0.15;
+    CGFloat arrowOffset = size.height * 0.16;
+
+    [path moveToPoint:CGPointMake(cx - halfWidth, mid + arrowOffset)];
+    [path addLineToPoint:CGPointMake(cx + halfWidth, mid - arrowOffset)];
+    [path addLineToPoint:CGPointMake(cx, top)];
+    [path addLineToPoint:CGPointMake(cx, bottom)];
+    [path addLineToPoint:CGPointMake(cx + halfWidth, mid + arrowOffset)];
+    [path addLineToPoint:CGPointMake(cx - halfWidth, mid - arrowOffset)];
+
+    [path stroke];
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
+- (void)updateNowPlayingArtwork {
+    UIImage *artworkImage;
+    NSString *selectedType = self.selectedAudioDevice[kTwilioVoiceReactNativeAudioDeviceKeyType];
+
+    if ([selectedType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeyBluetooth]) {
+        UIImage *icon = [UIImage systemImageNamed:@"earbuds"
+                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:40 weight:UIImageSymbolWeightRegular]];
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(80, 80), NO, 0);
+        [[UIColor labelColor] setFill];
+        CGFloat bx = (80 - icon.size.width) / 2;
+        CGFloat by = (80 - icon.size.height) / 2;
+        [icon drawAtPoint:CGPointMake(bx, by)];
+        artworkImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    } else {
+        NSString *sfSymbolName = @"iphone";
+        if ([selectedType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeySpeaker]) {
+            sfSymbolName = @"speaker.wave.2.fill";
+        }
+
+        UIImage *icon = [UIImage systemImageNamed:sfSymbolName
+                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:40 weight:UIImageSymbolWeightRegular]];
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(80, 80), NO, 0);
+        [[UIColor labelColor] setFill];
+        CGFloat x = (80 - icon.size.width) / 2;
+        CGFloat y = (80 - icon.size.height) / 2;
+        [icon drawAtPoint:CGPointMake(x, y)];
+        artworkImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    }
+
+    MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc] initWithBoundsSize:artworkImage.size
+                                                                requestHandler:^UIImage * _Nonnull(CGSize size) {
+        return artworkImage;
+    }];
+
+    NSMutableDictionary *nowPlayingInfo = [[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+    nowPlayingInfo[MPMediaItemPropertyTitle] = self.selectedAudioDevice[kTwilioVoiceReactNativeAudioDeviceKeyName] ?: @"Call";
+    nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork;
+    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfo;
 }
 
 - (void)initializeAudioDeviceList {
@@ -640,21 +715,29 @@ RCT_EXPORT_METHOD(voice_selectAudioDevice:(NSString *)uuid
 RCT_EXPORT_METHOD(voice_showNativeAvRoutePicker:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    TVRNAVRoutePickerView *routePicker = [[TVRNAVRoutePickerView alloc] initWithFrame:CGRectZero];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+        [commandCenter.pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
 
-    UIWindow *window = [UIApplication sharedApplication].windows[0];
-    UIViewController *rootViewController = window.rootViewController;
-    if (rootViewController) {
-        UIViewController *topViewController = rootViewController;
-        while (topViewController.presentedViewController) {
-            topViewController = topViewController.presentedViewController;
-        }
+        [self availableAudioDevices];
+        [self updateNowPlayingArtwork];
 
-        dispatch_async(dispatch_get_main_queue(), ^{
+        TVRNAVRoutePickerView *routePicker = [[TVRNAVRoutePickerView alloc] initWithFrame:CGRectZero];
+
+        UIWindow *window = [UIApplication sharedApplication].windows[0];
+        UIViewController *rootViewController = window.rootViewController;
+        if (rootViewController) {
+            UIViewController *topViewController = rootViewController;
+            while (topViewController.presentedViewController) {
+                topViewController = topViewController.presentedViewController;
+            }
+
             [topViewController.view addSubview:routePicker];
             [routePicker present];
-        });
-    }
+        }
+    });
 
     resolve(nil);
 }
