@@ -69,6 +69,10 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 @property(nonatomic, strong) NSMutableDictionary *audioDevices;
 @property(nonatomic, strong) NSDictionary *selectedAudioDevice;
 @property(nonatomic, assign) BOOL registrationInProgress;
+// Bluetooth devices cached by their HFP port UID so they stay visible in the
+// device list even when AllowBluetooth is not in the session options (e.g. when
+// earpiece is selected). Entries are evicted on genuine Bluetooth disconnect.
+@property(nonatomic, strong) NSMutableDictionary *cachedBluetoothDevices;
 
 @end
 
@@ -83,6 +87,7 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
         _callInviteMap = [NSMutableDictionary dictionary];
         _cancelledCallInviteMap = [NSMutableDictionary dictionary];
         _audioDevices = [NSMutableDictionary dictionary];
+        _cachedBluetoothDevices = [NSMutableDictionary dictionary];
 
         NSString *reactNativeSDK = kTwilioVoiceReactNativeReactNativeVoiceSDK;
         setenv("global-env-sdk", [reactNativeSDK UTF8String], 1);
@@ -143,6 +148,30 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 }
 
 - (void)handleRouteChange:(NSNotification *)notification {
+    NSDictionary *userInfo = notification.userInfo;
+    NSInteger changeReason = [userInfo[AVAudioSessionRouteChangeReasonKey] integerValue];
+
+    // On genuine Bluetooth disconnect, evict the device from the cache so it
+    // disappears from the list. For any other route change (e.g. switching to
+    // earpiece while Bluetooth is still physically connected) the cache is kept.
+    if (changeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable) {
+        AVAudioSessionRouteDescription *previousRoute = userInfo[AVAudioSessionRouteChangePreviousRouteKey];
+        for (AVAudioSessionPortDescription *port in previousRoute.inputs) {
+            if ([port.portType isEqualToString:AVAudioSessionPortBluetoothHFP]) {
+                NSString *keyToRemove = nil;
+                for (NSString *key in self.cachedBluetoothDevices) {
+                    if ([self.cachedBluetoothDevices[key][kTwilioVoiceAudioDeviceUid] isEqualToString:port.UID]) {
+                        keyToRemove = key;
+                        break;
+                    }
+                }
+                if (keyToRemove) {
+                    [self.cachedBluetoothDevices removeObjectForKey:keyToRemove];
+                }
+            }
+        }
+    }
+
     [self availableAudioDevices];
 
     NSMutableArray *nativeAudioDeviceInfos = [NSMutableArray array];
@@ -196,12 +225,30 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
         NSLog(@"\t%@, %@, %@", port.portType, port. portName, port.UID);
 
         if ([port.portType isEqualToString:AVAudioSessionPortBluetoothHFP]) {
-            NSUUID *uuid = [NSUUID UUID];
-            NSDictionary *bluetoothHfpDevice = @{ kTwilioVoiceReactNativeAudioDeviceKeyUuid: uuid.UUIDString,
+            // Check if this device is already cached (stable UUID across sessions)
+            NSString *existingKey = nil;
+            for (NSString *key in self.cachedBluetoothDevices) {
+                if ([self.cachedBluetoothDevices[key][kTwilioVoiceAudioDeviceUid] isEqualToString:port.UID]) {
+                    existingKey = key;
+                    break;
+                }
+            }
+            NSString *uuid = existingKey ?: [NSUUID UUID].UUIDString;
+            NSDictionary *bluetoothHfpDevice = @{ kTwilioVoiceReactNativeAudioDeviceKeyUuid: uuid,
                                                   kTwilioVoiceReactNativeAudioDeviceKeyType: [self audioPortTypeMapping:port.portType],
                                                   kTwilioVoiceReactNativeAudioDeviceKeyName: port.portName,
                                                   kTwilioVoiceAudioDeviceUid: port.UID };
-            self.audioDevices[uuid.UUIDString] = bluetoothHfpDevice;
+            self.cachedBluetoothDevices[uuid] = bluetoothHfpDevice;
+            self.audioDevices[uuid] = bluetoothHfpDevice;
+        }
+    }
+
+    // Re-add cached Bluetooth devices that are not in availableInputs right now
+    // (happens when AllowBluetooth is absent from session options while earpiece
+    // is active, but the headset is still physically connected).
+    for (NSString *key in self.cachedBluetoothDevices) {
+        if (!self.audioDevices[key]) {
+            self.audioDevices[key] = self.cachedBluetoothDevices[key];
         }
     }
 
@@ -283,6 +330,22 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 
     NSLog(@"Selecting %@(%@), %@", device[kTwilioVoiceReactNativeAudioDeviceKeyName], device[kTwilioVoiceReactNativeAudioDeviceKeyType], device[kTwilioVoiceAudioDeviceUid]);
 
+    // For Bluetooth: restore AllowBluetooth in session options BEFORE querying
+    // availableInputs. When earpiece was active, options were set to 0 (no
+    // Bluetooth), so the HFP port won't appear in availableInputs until we
+    // add it back to the session options first.
+    if ([portType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeyBluetooth]) {
+        NSError *categoryError;
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
+                                                mode:AVAudioSessionModeVoiceChat
+                                             options:AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP
+                                               error:&categoryError];
+        if (categoryError) {
+            NSLog(@"Failed to restore Bluetooth session options: %@", categoryError);
+            return NO;
+        }
+    }
+
     AVAudioSessionPortDescription *portDescription = nil;
     if ([portType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeyEarpiece]) {
         NSArray *availableInputs = [[AVAudioSession sharedInstance] availableInputs];
@@ -320,15 +383,34 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
         return NO;
     }
 
-    // Override output to speaker if speaker is selected
-    if ([portType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeySpeaker]) {
-        AVAudioSessionPortOverride outputOverride = AVAudioSessionPortOverrideSpeaker;
-        NSError *outputError;
-        [[AVAudioSession sharedInstance] overrideOutputAudioPort:outputOverride error:&outputError];
-        if (outputError) {
-            NSLog(@"Failed to override output port: %@", outputError);
+    // For Earpiece/Speaker: set session options and output override.
+    // Bluetooth already had its options set at the top of this method (before
+    // the availableInputs lookup), so we only need the outputOverride here.
+    if (![portType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeyBluetooth]) {
+        // options = 0: no Bluetooth flags forces iOS to built-in hardware.
+        // AllowBluetooth (HFP) must be absent or iOS keeps routing call audio to
+        // the headset; AllowBluetoothA2DP must also be absent or the output is
+        // reported as an unidentified BluetoothA2DP device.
+        NSError *categoryError;
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
+                                                mode:AVAudioSessionModeVoiceChat
+                                             options:0
+                                               error:&categoryError];
+        if (categoryError) {
+            NSLog(@"Failed to update audio session category: %@", categoryError);
             return NO;
         }
+    }
+
+    AVAudioSessionPortOverride outputOverride = [portType isEqualToString:kTwilioVoiceReactNativeAudioDeviceKeySpeaker]
+        ? AVAudioSessionPortOverrideSpeaker
+        : AVAudioSessionPortOverrideNone;
+
+    NSError *outputError;
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:outputOverride error:&outputError];
+    if (outputError) {
+        NSLog(@"Failed to override output port: %@", outputError);
+        return NO;
     }
 
     return YES;
