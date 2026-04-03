@@ -36,7 +36,12 @@
             break;
         }
     }
-    NSAssert(uuid, @"No matching call invite");
+
+    if (!uuid) {
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: no matching call invite for callSid %@", cancelledCallInvite.callSid);
+        return;
+    }
+
     self.cancelledCallInviteMap[uuid] = cancelledCallInvite;
 
     [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite
