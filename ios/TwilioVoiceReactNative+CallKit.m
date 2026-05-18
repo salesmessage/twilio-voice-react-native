@@ -301,6 +301,18 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
                              kTwilioVoiceReactNativeCallInviteEventKeyCallSid: callInvite.callSid,
                              kTwilioVoiceReactNativeEventKeyCallInvite: [self callInviteInfo:callInvite]}];
         [self.callInviteMap removeObjectForKey:action.callUUID.UUIDString];
+
+        // Keep TVOCallInvite alive for a few seconds after reject so the
+        // underlying Twilio Voice iOS SDK can finish rejection signaling and
+        // safely handle a late-arriving cancellation event without
+        // dereferencing a freed object. The dispatch_after block strongly
+        // retains `callInvite` until it runs, then releases it.
+        // See TVOCallInvite lifecycle contract:
+        // https://www.twilio.com/docs/voice/sdks/ios/changelog
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            NSLog(@"[TwilioVoiceReactNative] Releasing retained TVOCallInvite for callSid %@", callInvite.callSid);
+        });
     }
     
     [action fulfill];
