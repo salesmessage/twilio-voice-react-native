@@ -28,33 +28,53 @@
 }
 
 - (void)cancelledCallInviteReceived:(TVOCancelledCallInvite *)cancelledCallInvite error:(NSError *)error {
+    if (cancelledCallInvite == nil) {
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: nil cancelledCallInvite");
+        return;
+    }
+
+    NSString *cancelledCallSid = cancelledCallInvite.callSid;
+    if (cancelledCallSid == nil || cancelledCallSid.length == 0) {
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: missing callSid");
+        return;
+    }
+
     NSString *uuid;
     for (NSString *uuidKey in [self.callInviteMap allKeys]) {
         TVOCallInvite *callInvite = self.callInviteMap[uuidKey];
-        if ([callInvite.callSid isEqualToString:cancelledCallInvite.callSid]) {
+        if (callInvite == nil || callInvite.callSid == nil) {
+            continue;
+        }
+        if ([callInvite.callSid isEqualToString:cancelledCallSid]) {
             uuid = uuidKey;
             break;
         }
     }
 
     if (!uuid) {
-        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: no matching call invite for callSid %@", cancelledCallInvite.callSid);
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: no matching call invite for callSid %@", cancelledCallSid);
         return;
     }
 
     self.cancelledCallInviteMap[uuid] = cancelledCallInvite;
 
-    [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite
-                       body:@{
-                         kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeCallInviteEventTypeValueCancelled,
-                         kTwilioVoiceReactNativeCallInviteEventKeyCallSid: cancelledCallInvite.callSid,
-                         kTwilioVoiceReactNativeEventKeyCancelledCallInvite: [self cancelledCallInviteInfo:cancelledCallInvite],
-                         kTwilioVoiceReactNativeVoiceErrorKeyError: @{
-                           kTwilioVoiceReactNativeVoiceErrorKeyCode: @(error.code),
-                           kTwilioVoiceReactNativeVoiceErrorKeyMessage: [error localizedDescription]}}];
-    
+    NSMutableDictionary *eventBody = [@{
+        kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeCallInviteEventTypeValueCancelled,
+        kTwilioVoiceReactNativeCallInviteEventKeyCallSid: cancelledCallSid,
+        kTwilioVoiceReactNativeEventKeyCancelledCallInvite: [self cancelledCallInviteInfo:cancelledCallInvite],
+    } mutableCopy];
+
+    if (error != nil) {
+        eventBody[kTwilioVoiceReactNativeVoiceErrorKeyError] = @{
+            kTwilioVoiceReactNativeVoiceErrorKeyCode: @(error.code),
+            kTwilioVoiceReactNativeVoiceErrorKeyMessage: [error localizedDescription] ?: @"",
+        };
+    }
+
+    [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite body:eventBody];
+
     [self.callInviteMap removeObjectForKey:uuid];
-    
+
     [self endCallWithUuid:[[NSUUID alloc] initWithUUIDString:uuid]];
 }
 
