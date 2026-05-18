@@ -465,8 +465,19 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 }
 
 - (NSDictionary *)cancelledCallInviteInfo:(TVOCancelledCallInvite *)cancelledCallInvite {
+    if (cancelledCallInvite == nil) {
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteInfo: nil cancelledCallInvite");
+        return @{};
+    }
+
+    NSString *callSid = cancelledCallInvite.callSid;
+    if (callSid == nil || callSid.length == 0) {
+        NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteInfo: missing callSid");
+        return @{};
+    }
+
     NSMutableDictionary *cancelledCallInviteInfo = [@{
-        kTwilioVoiceReactNativeCancelledCallInviteInfoCallSid: cancelledCallInvite.callSid,
+        kTwilioVoiceReactNativeCancelledCallInviteInfoCallSid: callSid,
         kTwilioVoiceReactNativeCancelledCallInviteInfoTo: cancelledCallInvite.to
     } mutableCopy];
 
