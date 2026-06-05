@@ -72,7 +72,6 @@ import java.util.UUID;
 
 public class VoiceService extends Service {
   private static final SDKLog logger = new SDKLog(VoiceService.class);
-  private static final Map<String, Integer> missedCallsMap = new HashMap<String, Integer>();
   private static boolean isRegisterExecuted = false;
 
   public class VoiceServiceAPI extends Binder {
@@ -353,21 +352,6 @@ public class VoiceService extends Service {
       logger.debug("from: " + caller);
       String callerShort = caller.substring(caller.length() - 9);
 
-      int callerNumber = Integer.parseInt(callerShort);
-
-      if (!missedCallsMap.containsKey(caller)) {
-        missedCallsMap.put(caller, 0);
-      }
-
-      int missedCallsValue = missedCallsMap.get(caller);
-
-      missedCallsMap.put(caller, ++missedCallsValue);
-
-      Notification notification = NotificationUtility.createMissedCallNotificationWithLowImportance(
-        VoiceService.this,
-        callRecord, missedCallsValue, caller);
-      createOrReplaceNotification2(getApplicationContext(), callerNumber, notification);
-
       // notify JS layer
       sendJSEvent(
         ScopeCallInvite,
@@ -530,7 +514,5 @@ public class VoiceService extends Service {
       new Pair<>("contact", CONTACT_DATA));
 
     postponeMissedCallNotificationCallback(payload, 0);
-
-    missedCallsMap.put(CALLER, 0);
   }
 }
