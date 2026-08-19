@@ -6,6 +6,7 @@
 //
 
 @import TwilioVoice;
+@import CallKit;
 
 #import "TwilioVoiceReactNative.h"
 #import "TwilioVoiceReactNativeConstants.h"
@@ -73,9 +74,34 @@
 
     [self sendEventWithName:kTwilioVoiceReactNativeScopeCallInvite body:eventBody];
 
+    // Ring-group / call-distribution calls ring every member simultaneously.
+    // When one member answers, Twilio cancels the invite on all the others.
+    // Report those cancellations to CallKit as "answered elsewhere" so iOS does
+    // NOT log them as red "Missed" calls (or bump the missed-call badge) on the
+    // non-answering members' devices. The backend flags such calls with the
+    // `isGroupCall` custom parameter on the invite.
+    TVOCallInvite *matchedInvite = self.callInviteMap[uuid];
+    BOOL isGroupCall = [matchedInvite.customParameters[@"isGroupCall"] boolValue];
+
+    // TEMP (SMR-6844): both sources logged so we can see the exact key/value the
+    // backend sends and whether the cancelled invite carries the params too.
+    NSLog(@"[TwilioVoiceReactNative] cancelled invite %@ isGroupCall=%d invite=%@ cancelled=%@",
+          cancelledCallSid,
+          isGroupCall,
+          matchedInvite.customParameters,
+          cancelledCallInvite.customParameters);
+
     [self.callInviteMap removeObjectForKey:uuid];
 
-    [self endCallWithUuid:[[NSUUID alloc] initWithUUIDString:uuid]];
+    if (isGroupCall) {
+        [self.callKitProvider reportCallWithUUID:[[NSUUID alloc] initWithUUIDString:uuid]
+                                     endedAtDate:[NSDate date]
+                                          reason:CXCallEndedReasonAnsweredElsewhere];
+    } else {
+        // 1:1 direct call — keep the default behavior so a genuinely missed call
+        // is still logged as a red "Missed" entry in native Recents.
+        [self endCallWithUuid:[[NSUUID alloc] initWithUUIDString:uuid]];
+    }
 }
 
 @end
