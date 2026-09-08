@@ -133,6 +133,31 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
     }];
 }
 
+- (void)reportAndEndUnrecognizedIncomingCall {
+    if (self.callKitProvider == nil) {
+        NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: callKitProvider is nil, cannot report");
+        return;
+    }
+
+    // We don't have a real call invite to report (that's the whole problem),
+    // so report a placeholder call purely to satisfy PushKit's "every VoIP
+    // push must result in a CallKit report" requirement, then end it right
+    // away. This never rings or shows UI for longer than an instant, but it
+    // prevents iOS from killing the app for an unreported VoIP push.
+    NSUUID *placeholderUuid = [NSUUID UUID];
+    CXHandle *callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:@"Unknown"];
+    CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
+    callUpdate.remoteHandle = callHandle;
+
+    [self.callKitProvider reportNewIncomingCallWithUUID:placeholderUuid update:callUpdate completion:^(NSError *error) {
+        if (error) {
+            NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: reportNewIncomingCallWithUUID error: %@", error);
+        }
+
+        [self.callKitProvider reportCallWithUUID:placeholderUuid endedAtDate:[NSDate date] reason:CXCallEndedReasonFailed];
+    }];
+}
+
 - (void)answerCallInvite:(NSUUID *)uuid
               completion:(void(^)(BOOL success))completionHandler {
     self.callKitCompletionCallback = completionHandler;

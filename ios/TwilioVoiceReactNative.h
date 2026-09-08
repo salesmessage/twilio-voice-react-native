@@ -68,6 +68,11 @@ FOUNDATION_EXPORT NSString * const kTwilioVoiceReactNativeEventKeyCancelledCallI
                          params:(NSDictionary *)params
                   contactHandle:(NSString *)contactHandle;
 - (void)reportNewIncomingCall:(TVOCallInvite *)callInvite;
+/* Fallback used when a VoIP push cannot be parsed into a Twilio Voice call
+ * invite. PushKit requires that every VoIP push results in a CallKit report,
+ * so we report a placeholder call and immediately end it rather than let the
+ * OS terminate the app for an unreported push (see SMR-6413 crash investigation). */
+- (void)reportAndEndUnrecognizedIncomingCall;
 - (void)endCallWithUuid:(NSUUID *)uuid;
 /* Initiate the answering from the app UI */
 - (void)answerCallInvite:(NSUUID *)uuid
