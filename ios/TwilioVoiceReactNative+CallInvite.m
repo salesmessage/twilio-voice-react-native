@@ -31,12 +31,15 @@
 - (void)cancelledCallInviteReceived:(TVOCancelledCallInvite *)cancelledCallInvite error:(NSError *)error {
     if (cancelledCallInvite == nil) {
         NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: nil cancelledCallInvite");
+        // Valid VoIP push was already consumed by Twilio SDK; still must report to CallKit.
+        [self reportAndEndUnrecognizedIncomingCall];
         return;
     }
 
     NSString *cancelledCallSid = cancelledCallInvite.callSid;
     if (cancelledCallSid == nil || cancelledCallSid.length == 0) {
         NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: missing callSid");
+        [self reportAndEndUnrecognizedIncomingCall];
         return;
     }
 
@@ -53,7 +56,11 @@
     }
 
     if (!uuid) {
+        // Cancel push with no locally tracked invite (race / cold start / already
+        // cleaned up). handleNotification: returned YES so PushKit still requires
+        // a CallKit report for this push.
         NSLog(@"[TwilioVoiceReactNative] cancelledCallInviteReceived: no matching call invite for callSid %@", cancelledCallSid);
+        [self reportAndEndUnrecognizedIncomingCall];
         return;
     }
 

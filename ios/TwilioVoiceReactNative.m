@@ -109,6 +109,16 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 }
 
 - (void)initializePushRegistry {
+    // Guard against double-initialization: both the legacy and redesigned JS
+    // call sites (VoiceOrVideoManager and voiceService) independently call
+    // voice.initializePushRegistry(). Recreating the PKPushRegistry mid-session
+    // would briefly leave no delegate wired up while the old one is torn down
+    // and the new one is spun up, right when a VoIP push could arrive.
+    if (self.twilioVoicePushRegistry != nil) {
+        NSLog(@"[TwilioVoiceReactNative] initializePushRegistry: already initialized, skipping");
+        return;
+    }
+
     self.twilioVoicePushRegistry = [TwilioVoicePushRegistry new];
     [self.twilioVoicePushRegistry updatePushRegistry];
 }
@@ -139,7 +149,26 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
         return;
     } else if ([type isEqualToString:kTwilioVoicePushRegistryNotificationIncomingPushReceived]) {
         NSDictionary *payload = eventBody[kTwilioVoicePushRegistryNotificationIncomingPushPayload];
-        [TwilioVoiceSDK handleNotification:payload delegate:self delegateQueue:nil callMessageDelegate:self];
+        BOOL isTwilioVoicePush = [TwilioVoiceSDK handleNotification:payload delegate:self delegateQueue:nil callMessageDelegate:self];
+
+        if (!isTwilioVoicePush) {
+            // handleNotification: returned NO, meaning it could not parse this
+            // payload into a call invite, so callInviteReceived: (and therefore
+            // reportNewIncomingCall:) will never fire for this push. Left alone,
+            // iOS kills the app for never reporting the push to CallKit
+            // (NSInternalInconsistencyException). Report + immediately end a
+            // placeholder call so we always satisfy the PushKit contract, and
+            // surface this as an error event so it is visible in crash/session
+            // reporting instead of failing silently.
+            NSLog(@"[TwilioVoiceReactNative] handlePushRegistryNotification: payload was not recognized as a Twilio Voice call invite");
+
+            [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
+                              body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
+                                  kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @31501,
+                                  kTwilioVoiceReactNativeVoiceErrorKeyMessage: @"VoIP push payload was not recognized as a Twilio Voice call invite"}}];
+
+            [self reportAndEndUnrecognizedIncomingCall];
+        }
     }
 }
 
