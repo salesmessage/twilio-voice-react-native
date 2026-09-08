@@ -135,7 +135,12 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
 
 - (void)reportAndEndUnrecognizedIncomingCall {
     if (self.callKitProvider == nil) {
-        NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: callKitProvider is nil, cannot report");
+        NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: callKitProvider is nil, initializing");
+        [self initializeCallKit];
+    }
+
+    if (self.callKitProvider == nil) {
+        NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: callKitProvider still nil after initializeCallKit");
         return;
     }
 
@@ -152,6 +157,7 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
     [self.callKitProvider reportNewIncomingCallWithUUID:placeholderUuid update:callUpdate completion:^(NSError *error) {
         if (error) {
             NSLog(@"[TwilioVoiceReactNative] reportAndEndUnrecognizedIncomingCall: reportNewIncomingCallWithUUID error: %@", error);
+            return;
         }
 
         [self.callKitProvider reportCallWithUUID:placeholderUuid endedAtDate:[NSDate date] reason:CXCallEndedReasonFailed];

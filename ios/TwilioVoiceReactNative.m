@@ -160,11 +160,11 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
             // placeholder call so we always satisfy the PushKit contract, and
             // surface this as an error event so it is visible in crash/session
             // reporting instead of failing silently.
-            NSLog(@"[TwilioVoiceReactNative] handlePushRegistryNotification: payload was not recognized as a Twilio Voice call invite: %@", payload);
+            NSLog(@"[TwilioVoiceReactNative] handlePushRegistryNotification: payload was not recognized as a Twilio Voice call invite");
 
             [self sendEventWithName:kTwilioVoiceReactNativeScopeVoice
                               body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeVoiceEventError,
-                                  kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @0,
+                                  kTwilioVoiceReactNativeVoiceErrorKeyError: @{kTwilioVoiceReactNativeVoiceErrorKeyCode: @31501,
                                   kTwilioVoiceReactNativeVoiceErrorKeyMessage: @"VoIP push payload was not recognized as a Twilio Voice call invite"}}];
 
             [self reportAndEndUnrecognizedIncomingCall];
