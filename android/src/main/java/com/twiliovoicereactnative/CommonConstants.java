@@ -118,6 +118,10 @@ public class CommonConstants {
   public static final String CallEventReconnected = "callEventReconnected";
   public static final String CallEventRinging = "callEventRinging";
 
+  // Changed from the system call UI (CallKit), not via call.mute() / call.hold()
+  public static final String CallEventCallKitMuteChanged = "callEventCallKitMuteChanged";
+  public static final String CallEventCallKitHoldChanged = "callEventCallKitHoldChanged";
+
   // Quality warnings
   public static final String CallEventQualityWarningsChanged = "callEventQualityWarningsChanged";
   public static final String CallEventCurrentWarnings = "callEventCurrentWarnings";

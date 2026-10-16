@@ -81,6 +81,18 @@ export declare interface Call {
     incomingCallMessage: IncomingCallMessage
   ): boolean;
 
+  /** @internal */
+  emit(
+    callKitMuteChangedEvent: Call.Event.CallKitMuteChanged,
+    isMuted: boolean
+  ): boolean;
+
+  /** @internal */
+  emit(
+    callKitHoldChangedEvent: Call.Event.CallKitHoldChanged,
+    isOnHold: boolean
+  ): boolean;
+
   /**
    * ----------------
    * Listener Typings
@@ -316,6 +328,64 @@ export declare interface Call {
   ): this;
 
   /**
+   * CallKit mute changed event. Raised when the call is muted or unmuted from
+   * the system call UI (iOS CallKit), not via {@link (Call:class).mute}.
+   *
+   * @example
+   * ```typescript
+   * call.addListener(Call.Event.CallKitMuteChanged, (isMuted) => {
+   *   // mute toggled from the system call UI
+   * });
+   * ```
+   *
+   * @remarks
+   * iOS only.
+   *
+   * @param callKitMuteChangedEvent - The raised event string.
+   * @param listener - A listener function that will be invoked when the event
+   * is raised.
+   * @returns - The call object.
+   */
+  addListener(
+    callKitMuteChangedEvent: Call.Event.CallKitMuteChanged,
+    listener: Call.Listener.CallKitMuteChanged
+  ): this;
+  /** {@inheritDoc (Call:interface).(addListener:9)} */
+  on(
+    callKitMuteChangedEvent: Call.Event.CallKitMuteChanged,
+    listener: Call.Listener.CallKitMuteChanged
+  ): this;
+
+  /**
+   * CallKit hold changed event. Raised when the call is held or resumed from
+   * the system call UI (iOS CallKit), not via {@link (Call:class).hold}.
+   *
+   * @example
+   * ```typescript
+   * call.addListener(Call.Event.CallKitHoldChanged, (isOnHold) => {
+   *   // hold toggled from the system call UI
+   * });
+   * ```
+   *
+   * @remarks
+   * iOS only.
+   *
+   * @param callKitHoldChangedEvent - The raised event string.
+   * @param listener - A listener function that will be invoked when the event
+   * is raised.
+   * @returns - The call object.
+   */
+  addListener(
+    callKitHoldChangedEvent: Call.Event.CallKitHoldChanged,
+    listener: Call.Listener.CallKitHoldChanged
+  ): this;
+  /** {@inheritDoc (Call:interface).(addListener:10)} */
+  on(
+    callKitHoldChangedEvent: Call.Event.CallKitHoldChanged,
+    listener: Call.Listener.CallKitHoldChanged
+  ): this;
+
+  /**
    * Generic event listener typings.
    * @param callEvent - The raised event string.
    * @param listener - A listener function that will be invoked when the event
@@ -324,7 +394,7 @@ export declare interface Call {
    */
   addListener(callEvent: Call.Event, listener: Call.Listener.Generic): this;
   /**
-   * {@inheritDoc (Call:interface).(addListener:9)}
+   * {@inheritDoc (Call:interface).(addListener:11)}
    */
   on(callEvent: Call.Event, listener: Call.Listener.Generic): this;
 }
@@ -463,6 +533,14 @@ export class Call extends EventEmitter {
        */
       [Constants.CallEventQualityWarningsChanged]:
         this._handleQualityWarningsChangedEvent,
+
+      /**
+       * System call UI (CallKit)
+       */
+      [Constants.CallEventCallKitMuteChanged]:
+        this._handleCallKitMuteChangedEvent,
+      [Constants.CallEventCallKitHoldChanged]:
+        this._handleCallKitHoldChangedEvent,
 
       /**
        * Call Message
@@ -680,6 +758,46 @@ export class Call extends EventEmitter {
     const incomingCallMessage = new IncomingCallMessage(callMessageInfo);
 
     this.emit(Call.Event.MessageReceived, incomingCallMessage);
+  };
+
+  /**
+   * Handler for the {@link (Call:namespace).Event.CallKitMuteChanged} event.
+   * @param nativeCallEvent - The native call event.
+   */
+  private _handleCallKitMuteChangedEvent = (
+    nativeCallEvent: NativeCallEvent
+  ) => {
+    if (nativeCallEvent.type !== Constants.CallEventCallKitMuteChanged) {
+      throw new Error(
+        'Incorrect "call#callKitMuteChanged" handler called for type ' +
+          `"${nativeCallEvent.type}".`
+      );
+    }
+
+    this._update(nativeCallEvent);
+    this._isMuted = Boolean(nativeCallEvent.call.isMuted);
+
+    this.emit(Call.Event.CallKitMuteChanged, this._isMuted);
+  };
+
+  /**
+   * Handler for the {@link (Call:namespace).Event.CallKitHoldChanged} event.
+   * @param nativeCallEvent - The native call event.
+   */
+  private _handleCallKitHoldChangedEvent = (
+    nativeCallEvent: NativeCallEvent
+  ) => {
+    if (nativeCallEvent.type !== Constants.CallEventCallKitHoldChanged) {
+      throw new Error(
+        'Incorrect "call#callKitHoldChanged" handler called for type ' +
+          `"${nativeCallEvent.type}".`
+      );
+    }
+
+    this._update(nativeCallEvent);
+    this._isOnHold = Boolean(nativeCallEvent.call.isOnHold);
+
+    this.emit(Call.Event.CallKitHoldChanged, this._isOnHold);
   };
 
   /**
@@ -1020,6 +1138,18 @@ export namespace Call {
      * See {@link (Call:interface).(addListener:8)}
      */
     'MessageReceived' = 'messageReceived',
+
+    /**
+     * Event string for the `CallKitMuteChanged` event.
+     * See {@link (Call:interface).(addListener:9)}.
+     */
+    'CallKitMuteChanged' = 'callKitMuteChanged',
+
+    /**
+     * Event string for the `CallKitHoldChanged` event.
+     * See {@link (Call:interface).(addListener:10)}.
+     */
+    'CallKitHoldChanged' = 'callKitHoldChanged',
   }
 
   /**
@@ -1266,11 +1396,31 @@ export namespace Call {
     ) => void;
 
     /**
+     * CallKit mute changed event listener. This should be the function
+     * signature of any event listener bound to the
+     * {@link (Call:namespace).Event.CallKitMuteChanged} event.
+     *
+     * @remarks
+     * See {@link (Call:interface).(addListener:9)}.
+     */
+    export type CallKitMuteChanged = (isMuted: boolean) => void;
+
+    /**
+     * CallKit hold changed event listener. This should be the function
+     * signature of any event listener bound to the
+     * {@link (Call:namespace).Event.CallKitHoldChanged} event.
+     *
+     * @remarks
+     * See {@link (Call:interface).(addListener:10)}.
+     */
+    export type CallKitHoldChanged = (isOnHold: boolean) => void;
+
+    /**
      * Generic event listener. This should be the function signature of any
      * event listener bound to any call event.
      *
      * @remarks
-     * See {@link (Call:interface).(addListener:9)}.
+     * See {@link (Call:interface).(addListener:11)}.
      */
     export type Generic = (...args: any[]) => void;
   }

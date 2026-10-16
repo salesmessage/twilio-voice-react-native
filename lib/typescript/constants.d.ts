@@ -77,6 +77,8 @@ export declare enum Constants {
     'CallEventReconnecting' = "callEventReconnecting",
     'CallEventReconnected' = "callEventReconnected",
     'CallEventRinging' = "callEventRinging",
+    'CallEventCallKitMuteChanged' = "callEventCallKitMuteChanged",
+    'CallEventCallKitHoldChanged' = "callEventCallKitHoldChanged",
     'CallEventQualityWarningsChanged' = "callEventQualityWarningsChanged",
     'CallEventCurrentWarnings' = "callEventCurrentWarnings",
     'CallEventPreviousWarnings' = "callEventPreviousWarnings",

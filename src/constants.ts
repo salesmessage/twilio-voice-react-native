@@ -116,6 +116,10 @@ export enum Constants {
   'CallEventReconnected' = 'callEventReconnected',
   'CallEventRinging' = 'callEventRinging',
 
+  // Changed from the system call UI (CallKit), not via call.mute() / call.hold()
+  'CallEventCallKitMuteChanged' = 'callEventCallKitMuteChanged',
+  'CallEventCallKitHoldChanged' = 'callEventCallKitHoldChanged',
+
   // Quality warnings
   'CallEventQualityWarningsChanged' = 'callEventQualityWarningsChanged',
   'CallEventCurrentWarnings' = 'callEventCurrentWarnings',
