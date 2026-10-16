@@ -389,6 +389,12 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
         TVOCall *call = self.callMap[action.callUUID.UUIDString];
         [call setOnHold:action.isOnHold];
         [action fulfill];
+
+        // JS `call.hold()` sets the hold state directly, so this action always comes from the
+        // system call UI. Report it so the app can sync its state (and track it).
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeCall
+                           body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeCallEventCallKitHoldChanged,
+                                  kTwilioVoiceReactNativeEventKeyCall: [self callInfo:call]}];
     } else {
         [action fail];
     }
@@ -399,6 +405,12 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
         TVOCall *call = self.callMap[action.callUUID.UUIDString];
         [call setMuted:action.isMuted];
         [action fulfill];
+
+        // JS `call.mute()` sets the mute state directly, so this action always comes from the
+        // system call UI. Report it so the app can sync its state (and track it).
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeCall
+                           body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeCallEventCallKitMuteChanged,
+                                  kTwilioVoiceReactNativeEventKeyCall: [self callInfo:call]}];
     } else {
         [action fail];
     }

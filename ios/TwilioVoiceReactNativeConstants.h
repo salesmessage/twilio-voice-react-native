@@ -124,6 +124,10 @@ static NSString * const kTwilioVoiceReactNativeCallEventReconnecting = @"callEve
 static NSString * const kTwilioVoiceReactNativeCallEventReconnected = @"callEventReconnected";
 static NSString * const kTwilioVoiceReactNativeCallEventRinging = @"callEventRinging";
 
+// Changed from the system call UI (CallKit), not via call.mute() / call.hold()
+static NSString * const kTwilioVoiceReactNativeCallEventCallKitMuteChanged = @"callEventCallKitMuteChanged";
+static NSString * const kTwilioVoiceReactNativeCallEventCallKitHoldChanged = @"callEventCallKitHoldChanged";
+
 // Quality warnings
 static NSString * const kTwilioVoiceReactNativeCallEventQualityWarningsChanged = @"callEventQualityWarningsChanged";
 static NSString * const kTwilioVoiceReactNativeCallEventCurrentWarnings = @"callEventCurrentWarnings";

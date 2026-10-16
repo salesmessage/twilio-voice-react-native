@@ -48,12 +48,20 @@ export interface NativeCallQualityWarningsEvent {
     [Constants.CallEventCurrentWarnings]: NativeCallQualityWarnings;
     [Constants.CallEventPreviousWarnings]: NativeCallQualityWarnings;
 }
+export interface NativeCallCallKitMuteChangedEvent {
+    type: Constants.CallEventCallKitMuteChanged;
+    call: NativeCallInfo;
+}
+export interface NativeCallCallKitHoldChangedEvent {
+    type: Constants.CallEventCallKitHoldChanged;
+    call: NativeCallInfo;
+}
 export interface NativeCallMessageReceivedEvent {
     type: Constants.CallEventMessageReceived;
     call: NativeCallInfo;
     [Constants.CallMessage]: NativeCallMessageInfo;
 }
-export declare type NativeCallEvent = NativeCallConnectedEvent | NativeCallConnectFailureEvent | NativeCallReconnectingEvent | NativeCallReconnectedEvent | NativeCallDisconnectedEvent | NativeCallRingingEvent | NativeCallQualityWarningsEvent | NativeCallMessageReceivedEvent;
-export declare type NativeCallEventType = Constants.CallEventConnectFailure | Constants.CallEventConnected | Constants.CallEventDisconnected | Constants.CallEventQualityWarningsChanged | Constants.CallEventReconnected | Constants.CallEventReconnecting | Constants.CallEventRinging | Constants.CallEventMessageReceived;
+export declare type NativeCallEvent = NativeCallConnectedEvent | NativeCallConnectFailureEvent | NativeCallReconnectingEvent | NativeCallReconnectedEvent | NativeCallDisconnectedEvent | NativeCallRingingEvent | NativeCallQualityWarningsEvent | NativeCallCallKitMuteChangedEvent | NativeCallCallKitHoldChangedEvent | NativeCallMessageReceivedEvent;
+export declare type NativeCallEventType = Constants.CallEventConnectFailure | Constants.CallEventConnected | Constants.CallEventDisconnected | Constants.CallEventQualityWarningsChanged | Constants.CallEventReconnected | Constants.CallEventReconnecting | Constants.CallEventRinging | Constants.CallEventCallKitMuteChanged | Constants.CallEventCallKitHoldChanged | Constants.CallEventMessageReceived;
 export declare type NativeCallFeedbackIssue = Constants.CallFeedbackIssueAudioLatency | Constants.CallFeedbackIssueChoppyAudio | Constants.CallFeedbackIssueDroppedCall | Constants.CallFeedbackIssueEcho | Constants.CallFeedbackIssueNoisyCall | Constants.CallFeedbackIssueNotReported | Constants.CallFeedbackIssueOneWayAudio;
 export declare type NativeCallFeedbackScore = Constants.CallFeedbackScoreNotReported | Constants.CallFeedbackScoreOne | Constants.CallFeedbackScoreTwo | Constants.CallFeedbackScoreThree | Constants.CallFeedbackScoreFour | Constants.CallFeedbackScoreFive;
