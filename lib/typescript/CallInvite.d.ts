@@ -214,6 +214,12 @@ export declare class CallInvite extends EventEmitter {
      */
     private _to;
     /**
+     * Subscription to native call invite events. Removed once the invite is
+     * settled (accepted, rejected or cancelled): the shared native emitter would
+     * otherwise keep this object alive for the rest of the app session.
+     */
+    private _nativeEventSubscription;
+    /**
      * These objects should not be instantiated by consumers of the SDK. All
      * instances of the `CallInvite` class should be emitted by the SDK.
      *
@@ -224,6 +230,11 @@ export declare class CallInvite extends EventEmitter {
      * @internal
      */
     constructor({ uuid, callSid, customParameters, from, to }: NativeCallInviteInfo, state: CallInvite.State);
+    /**
+     * Stops listening to native events once the invite is settled. Accepted
+     * calls continue through their own {@link (Call:class)} object.
+     */
+    private _removeNativeEventSubscription;
     /**
      * This helper function serves as both a runtime-check error log and a
      * compile-time type-guard. If the switch-case statement below is non-

@@ -274,6 +274,14 @@ export class CallInvite extends EventEmitter {
    * Call `to` parameter.
    */
   private _to: string;
+  /**
+   * Subscription to native call invite events. Removed once the invite is
+   * settled (accepted, rejected or cancelled): the shared native emitter would
+   * otherwise keep this object alive for the rest of the app session.
+   */
+  private _nativeEventSubscription: ReturnType<
+    typeof NativeEventEmitter.addListener
+  > | null;
 
   /**
    * These objects should not be instantiated by consumers of the SDK. All
@@ -299,10 +307,19 @@ export class CallInvite extends EventEmitter {
 
     this._state = state;
 
-    NativeEventEmitter.addListener(
+    this._nativeEventSubscription = NativeEventEmitter.addListener(
       Constants.ScopeCallInvite,
       this._handleNativeCallInviteEvent
     );
+  }
+
+  /**
+   * Stops listening to native events once the invite is settled. Accepted
+   * calls continue through their own {@link (Call:class)} object.
+   */
+  private _removeNativeEventSubscription() {
+    this._nativeEventSubscription?.remove();
+    this._nativeEventSubscription = null;
   }
 
   /**
@@ -396,7 +413,11 @@ export class CallInvite extends EventEmitter {
 
     const call = new Call(callInfo);
 
-    this.emit(CallInvite.Event.Accepted, call);
+    try {
+      this.emit(CallInvite.Event.Accepted, call);
+    } finally {
+      this._removeNativeEventSubscription();
+    }
   };
 
   /**
@@ -404,7 +425,11 @@ export class CallInvite extends EventEmitter {
    */
   private _handleCallInviteRejected = () => {
     this._state = CallInvite.State.Rejected;
-    this.emit(CallInvite.Event.Rejected);
+    try {
+      this.emit(CallInvite.Event.Rejected);
+    } finally {
+      this._removeNativeEventSubscription();
+    }
   };
 
   /**
@@ -422,7 +447,11 @@ export class CallInvite extends EventEmitter {
         )
       : undefined;
 
-    this.emit(CallInvite.Event.Cancelled, error);
+    try {
+      this.emit(CallInvite.Event.Cancelled, error);
+    } finally {
+      this._removeNativeEventSubscription();
+    }
   };
 
   /**

@@ -479,6 +479,14 @@ export class Call extends EventEmitter {
     NativeCallEventType,
     (callEvent: NativeCallEvent) => void
   >;
+  /**
+   * Subscription to native call events. Removed once the call ends
+   * (disconnected or failed to connect): the shared native emitter would
+   * otherwise keep this object alive for the rest of the app session.
+   */
+  private _nativeEventSubscription: ReturnType<
+    typeof NativeEventEmitter.addListener
+  > | null;
 
   /**
    * Constructor for the {@link (Call:class) | Call class}. This should not be
@@ -548,10 +556,18 @@ export class Call extends EventEmitter {
       [Constants.CallEventMessageReceived]: this._handleMessageReceivedEvent,
     };
 
-    NativeEventEmitter.addListener(
+    this._nativeEventSubscription = NativeEventEmitter.addListener(
       Constants.ScopeCall,
       this._handleNativeEvent
     );
+  }
+
+  /**
+   * Stops listening to native events once the call has ended.
+   */
+  private _removeNativeEventSubscription() {
+    this._nativeEventSubscription?.remove();
+    this._nativeEventSubscription = null;
   }
 
   /**
@@ -632,7 +648,11 @@ export class Call extends EventEmitter {
 
     const { message, code } = nativeCallEvent.error;
     const error = constructTwilioError(message, code);
-    this.emit(Call.Event.ConnectFailure, error);
+    try {
+      this.emit(Call.Event.ConnectFailure, error);
+    } finally {
+      this._removeNativeEventSubscription();
+    }
   };
 
   /**
@@ -649,12 +669,16 @@ export class Call extends EventEmitter {
 
     this._update(nativeCallEvent);
 
-    if (nativeCallEvent.error) {
-      const { message, code } = nativeCallEvent.error;
-      const error = constructTwilioError(message, code);
-      this.emit(Call.Event.Disconnected, error);
-    } else {
-      this.emit(Call.Event.Disconnected);
+    try {
+      if (nativeCallEvent.error) {
+        const { message, code } = nativeCallEvent.error;
+        const error = constructTwilioError(message, code);
+        this.emit(Call.Event.Disconnected, error);
+      } else {
+        this.emit(Call.Event.Disconnected);
+      }
+    } finally {
+      this._removeNativeEventSubscription();
     }
   };
 

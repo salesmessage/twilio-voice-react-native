@@ -365,6 +365,12 @@ export declare class Call extends EventEmitter {
      */
     private _nativeEventHandler;
     /**
+     * Subscription to native call events. Removed once the call ends
+     * (disconnected or failed to connect): the shared native emitter would
+     * otherwise keep this object alive for the rest of the app session.
+     */
+    private _nativeEventSubscription;
+    /**
      * Constructor for the {@link (Call:class) | Call class}. This should not be
      * invoked by third-party code. All instances of the
      * {@link (Call:class) | Call class} should be made by the SDK and emitted by
@@ -377,6 +383,10 @@ export declare class Call extends EventEmitter {
      * @internal
      */
     constructor({ uuid, customParameters, from, sid, state, to, isMuted, isOnHold, initialConnectedTimestamp, }: NativeCallInfo);
+    /**
+     * Stops listening to native events once the call has ended.
+     */
+    private _removeNativeEventSubscription;
     /**
      * This intermediate native call event handler acts as a "gate", only
      * executing the actual call event handler (such as `Connected`) if this call
