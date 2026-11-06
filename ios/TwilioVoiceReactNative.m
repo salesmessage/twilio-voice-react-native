@@ -205,7 +205,12 @@ static TVODefaultAudioDevice *sTwilioAudioDevice;
 
     NSMutableArray *nativeAudioDeviceInfos = [NSMutableArray array];
     for (NSString *key in [self.audioDevices allKeys]) {
-        [nativeAudioDeviceInfos addObject:self.audioDevices[key]];
+        // handleRouteChange: rebuilds audioDevices on another thread, so a key from
+        // the allKeys snapshot can be gone by now; adding nil crashes with NSInvalidArgumentException.
+        NSDictionary *audioDevice = self.audioDevices[key];
+        if (audioDevice != nil) {
+            [nativeAudioDeviceInfos addObject:audioDevice];
+        }
     }
 
     NSMutableDictionary *eventBody = [@{
@@ -742,10 +747,19 @@ RCT_EXPORT_METHOD(voice_getAudioDevices:(RCTPromiseResolveBlock)resolve
 {
     NSMutableArray *nativeAudioDeviceInfos = [NSMutableArray array];
     for (NSString *key in [self.audioDevices allKeys]) {
-        [nativeAudioDeviceInfos addObject:self.audioDevices[key]];
+        // handleRouteChange: rebuilds audioDevices on another thread, so a key from
+        // the allKeys snapshot can be gone by now; adding nil crashes with NSInvalidArgumentException.
+        NSDictionary *audioDevice = self.audioDevices[key];
+        if (audioDevice != nil) {
+            [nativeAudioDeviceInfos addObject:audioDevice];
+        }
     }
-    resolve(@{kTwilioVoiceReactNativeAudioDeviceKeyAudioDevices: nativeAudioDeviceInfos,
-              kTwilioVoiceReactNativeAudioDeviceKeySelectedDevice: self.selectedAudioDevice});
+    NSMutableDictionary *result = [@{kTwilioVoiceReactNativeAudioDeviceKeyAudioDevices: nativeAudioDeviceInfos} mutableCopy];
+    NSDictionary *selectedAudioDevice = self.selectedAudioDevice;
+    if (selectedAudioDevice != nil) {
+        result[kTwilioVoiceReactNativeAudioDeviceKeySelectedDevice] = selectedAudioDevice;
+    }
+    resolve(result);
 }
 
 RCT_EXPORT_METHOD(voice_selectAudioDevice:(NSString *)uuid
