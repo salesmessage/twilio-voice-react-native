@@ -122,6 +122,9 @@ public class CommonConstants {
   public static final String CallEventCallKitMuteChanged = "callEventCallKitMuteChanged";
   public static final String CallEventCallKitHoldChanged = "callEventCallKitHoldChanged";
 
+  // This device asked to end the call: the app, the system call UI (CallKit) or the call notification
+  public static final String CallEventDisconnectRequested = "callEventDisconnectRequested";
+
   // Quality warnings
   public static final String CallEventQualityWarningsChanged = "callEventQualityWarningsChanged";
   public static final String CallEventCurrentWarnings = "callEventCurrentWarnings";

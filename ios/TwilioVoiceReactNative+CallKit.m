@@ -322,6 +322,14 @@ NSString * const kCustomParametersKeyCallerName = @"CallerName";
 - (void)provider:(CXProvider *)provider performEndCallAction:(CXEndCallAction *)action {
     if (self.callMap[action.callUUID.UUIDString]) {
         TVOCall *call = self.callMap[action.callUUID.UUIDString];
+
+        // SMR-7651: every end on this device comes here (JS `call.disconnect()` too, through
+        // endCallWithUuid), so the app can tell its own hang-up from the other side's. Sent before
+        // the disconnect, so it reaches JS ahead of the Disconnected event.
+        [self sendEventWithName:kTwilioVoiceReactNativeScopeCall
+                           body:@{kTwilioVoiceReactNativeVoiceEventType: kTwilioVoiceReactNativeCallEventDisconnectRequested,
+                                  kTwilioVoiceReactNativeEventKeyCall: [self callInfo:call]}];
+
         [call disconnect];
     } else if (self.callInviteMap[action.callUUID.UUIDString]) {
         TVOCallInvite *callInvite = self.callInviteMap[action.callUUID.UUIDString];

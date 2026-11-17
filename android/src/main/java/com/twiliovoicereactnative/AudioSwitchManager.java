@@ -69,7 +69,8 @@ class AudioSwitchManager {
    */
   public AudioSwitchManager(Context context) {
     audioDevices = new ConcurrentHashMap<>();
-    audioSwitch = new AudioSwitch(context);
+    // SMR-7651: the focus changes go to the app through the relay (a no-op until the app sets a listener).
+    audioSwitch = new AudioSwitch(context, null, false, AudioFocusChangeRelay::onAudioFocusChange);
   }
 
   public void start() {

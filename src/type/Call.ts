@@ -68,6 +68,11 @@ export interface NativeCallCallKitHoldChangedEvent {
   call: NativeCallInfo;
 }
 
+export interface NativeCallDisconnectRequestedEvent {
+  type: Constants.CallEventDisconnectRequested;
+  call: NativeCallInfo;
+}
+
 export interface NativeCallMessageReceivedEvent {
   type: Constants.CallEventMessageReceived;
   call: NativeCallInfo;
@@ -84,6 +89,7 @@ export type NativeCallEvent =
   | NativeCallQualityWarningsEvent
   | NativeCallCallKitMuteChangedEvent
   | NativeCallCallKitHoldChangedEvent
+  | NativeCallDisconnectRequestedEvent
   | NativeCallMessageReceivedEvent;
 
 export type NativeCallEventType =
@@ -96,6 +102,7 @@ export type NativeCallEventType =
   | Constants.CallEventRinging
   | Constants.CallEventCallKitMuteChanged
   | Constants.CallEventCallKitHoldChanged
+  | Constants.CallEventDisconnectRequested
   | Constants.CallEventMessageReceived;
 
 export type NativeCallFeedbackIssue =

@@ -120,6 +120,9 @@ export enum Constants {
   'CallEventCallKitMuteChanged' = 'callEventCallKitMuteChanged',
   'CallEventCallKitHoldChanged' = 'callEventCallKitHoldChanged',
 
+  // This device asked to end the call: the app, the system call UI (CallKit) or the call notification
+  'CallEventDisconnectRequested' = 'callEventDisconnectRequested',
+
   // Quality warnings
   'CallEventQualityWarningsChanged' = 'callEventQualityWarningsChanged',
   'CallEventCurrentWarnings' = 'callEventCurrentWarnings',
