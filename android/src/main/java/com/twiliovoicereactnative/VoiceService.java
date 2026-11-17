@@ -7,6 +7,8 @@ import static com.twiliovoicereactnative.CommonConstants.CallInviteEventTypeValu
 import static com.twiliovoicereactnative.CommonConstants.CallInviteEventTypeValueCancelled;
 import static com.twiliovoicereactnative.CommonConstants.CallInviteEventTypeValueNotificationTapped;
 import static com.twiliovoicereactnative.CommonConstants.CallInviteEventTypeValueRejected;
+import static com.twiliovoicereactnative.CommonConstants.CallEventDisconnectRequested;
+import static com.twiliovoicereactnative.CommonConstants.ScopeCall;
 import static com.twiliovoicereactnative.CommonConstants.ScopeCallInvite;
 import static com.twiliovoicereactnative.CommonConstants.ScopeVoice;
 import static com.twiliovoicereactnative.CommonConstants.VoiceErrorKeyError;
@@ -24,6 +26,7 @@ import static com.twiliovoicereactnative.Constants.ACTION_PUSH_APP_TO_FOREGROUND
 import static com.twiliovoicereactnative.Constants.ACTION_PUSH_APP_TO_FOREGROUND_FOR_MISSED_CALL;
 import static com.twiliovoicereactnative.Constants.ACTION_RAISE_OUTGOING_CALL_NOTIFICATION;
 import static com.twiliovoicereactnative.Constants.ACTION_REJECT_CALL;
+import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CALL_INFO;
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CALL_INVITE_INFO;
 import static com.twiliovoicereactnative.Constants.JS_EVENT_KEY_CANCELLED_CALL_INVITE_INFO;
 import static com.twiliovoicereactnative.Constants.VOICE_CHANNEL_DEFAULT_IMPORTANCE;
@@ -200,6 +203,12 @@ public class VoiceService extends Service {
   private void disconnect(final CallRecordDatabase.CallRecord callRecord) {
     logger.debug("disconnect");
     if (null != callRecord) {
+      // SMR-7651: the app's call.disconnect() and the hang-up of the call notification both come here,
+      // so the app can tell its own hang-up from the other side's. Sent before the disconnect, so it
+      // reaches JS ahead of the Disconnected event.
+      sendJSEvent(ScopeCall, constructJSMap(
+        new Pair<>(VoiceEventType, CallEventDisconnectRequested),
+        new Pair<>(JS_EVENT_KEY_CALL_INFO, serializeCall(callRecord))));
       Objects.requireNonNull(callRecord.getVoiceCall()).disconnect();
     } else {
       logger.warning("No call record found");

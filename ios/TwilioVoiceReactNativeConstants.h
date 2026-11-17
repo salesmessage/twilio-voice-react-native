@@ -128,6 +128,9 @@ static NSString * const kTwilioVoiceReactNativeCallEventRinging = @"callEventRin
 static NSString * const kTwilioVoiceReactNativeCallEventCallKitMuteChanged = @"callEventCallKitMuteChanged";
 static NSString * const kTwilioVoiceReactNativeCallEventCallKitHoldChanged = @"callEventCallKitHoldChanged";
 
+// This device asked to end the call: the app, the system call UI (CallKit) or the call notification
+static NSString * const kTwilioVoiceReactNativeCallEventDisconnectRequested = @"callEventDisconnectRequested";
+
 // Quality warnings
 static NSString * const kTwilioVoiceReactNativeCallEventQualityWarningsChanged = @"callEventQualityWarningsChanged";
 static NSString * const kTwilioVoiceReactNativeCallEventCurrentWarnings = @"callEventCurrentWarnings";

@@ -93,6 +93,9 @@ export declare interface Call {
     isOnHold: boolean
   ): boolean;
 
+  /** @internal */
+  emit(disconnectRequestedEvent: Call.Event.DisconnectRequested): boolean;
+
   /**
    * ----------------
    * Listener Typings
@@ -386,6 +389,35 @@ export declare interface Call {
   ): this;
 
   /**
+   * Disconnect requested event. Raised when this device asks to end the call:
+   * {@link (Call:class).disconnect}, the system call UI (iOS CallKit, a
+   * Bluetooth headset, CarPlay) or the hang-up of the call notification
+   * (Android). Raised before the {@link (Call:namespace).Event.Disconnected}
+   * event it leads to, so a Disconnected without it was ended elsewhere.
+   *
+   * @example
+   * ```typescript
+   * call.addListener(Call.Event.DisconnectRequested, () => {
+   *   // this device is ending the call
+   * });
+   * ```
+   *
+   * @param disconnectRequestedEvent - The raised event string.
+   * @param listener - A listener function that will be invoked when the event
+   * is raised.
+   * @returns - The call object.
+   */
+  addListener(
+    disconnectRequestedEvent: Call.Event.DisconnectRequested,
+    listener: Call.Listener.DisconnectRequested
+  ): this;
+  /** {@inheritDoc (Call:interface).(addListener:11)} */
+  on(
+    disconnectRequestedEvent: Call.Event.DisconnectRequested,
+    listener: Call.Listener.DisconnectRequested
+  ): this;
+
+  /**
    * Generic event listener typings.
    * @param callEvent - The raised event string.
    * @param listener - A listener function that will be invoked when the event
@@ -394,7 +426,7 @@ export declare interface Call {
    */
   addListener(callEvent: Call.Event, listener: Call.Listener.Generic): this;
   /**
-   * {@inheritDoc (Call:interface).(addListener:11)}
+   * {@inheritDoc (Call:interface).(addListener:12)}
    */
   on(callEvent: Call.Event, listener: Call.Listener.Generic): this;
 }
@@ -549,6 +581,8 @@ export class Call extends EventEmitter {
         this._handleCallKitMuteChangedEvent,
       [Constants.CallEventCallKitHoldChanged]:
         this._handleCallKitHoldChangedEvent,
+      [Constants.CallEventDisconnectRequested]:
+        this._handleDisconnectRequestedEvent,
 
       /**
        * Call Message
@@ -822,6 +856,25 @@ export class Call extends EventEmitter {
     this._isOnHold = Boolean(nativeCallEvent.call.isOnHold);
 
     this.emit(Call.Event.CallKitHoldChanged, this._isOnHold);
+  };
+
+  /**
+   * Handler for the {@link (Call:namespace).Event.DisconnectRequested} event.
+   * @param nativeCallEvent - The native call event.
+   */
+  private _handleDisconnectRequestedEvent = (
+    nativeCallEvent: NativeCallEvent
+  ) => {
+    if (nativeCallEvent.type !== Constants.CallEventDisconnectRequested) {
+      throw new Error(
+        'Incorrect "call#disconnectRequested" handler called for type ' +
+          `"${nativeCallEvent.type}".`
+      );
+    }
+
+    this._update(nativeCallEvent);
+
+    this.emit(Call.Event.DisconnectRequested);
   };
 
   /**
@@ -1174,6 +1227,12 @@ export namespace Call {
      * See {@link (Call:interface).(addListener:10)}.
      */
     'CallKitHoldChanged' = 'callKitHoldChanged',
+
+    /**
+     * Event string for the `DisconnectRequested` event.
+     * See {@link (Call:interface).(addListener:11)}.
+     */
+    'DisconnectRequested' = 'disconnectRequested',
   }
 
   /**
@@ -1440,11 +1499,21 @@ export namespace Call {
     export type CallKitHoldChanged = (isOnHold: boolean) => void;
 
     /**
+     * Disconnect requested event listener. This should be the function
+     * signature of any event listener bound to the
+     * {@link (Call:namespace).Event.DisconnectRequested} event.
+     *
+     * @remarks
+     * See {@link (Call:interface).(addListener:11)}.
+     */
+    export type DisconnectRequested = () => void;
+
+    /**
      * Generic event listener. This should be the function signature of any
      * event listener bound to any call event.
      *
      * @remarks
-     * See {@link (Call:interface).(addListener:11)}.
+     * See {@link (Call:interface).(addListener:12)}.
      */
     export type Generic = (...args: any[]) => void;
   }
